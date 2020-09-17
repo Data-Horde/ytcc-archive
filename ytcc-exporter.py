@@ -29,6 +29,8 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import timedelta
 
+from os import mkdir
+
 from json import loads
 
 
@@ -38,35 +40,20 @@ headers = {
     "cookie": "HSID="+cookies["HSID"]+"; SSID="+cookies["SSID"]+"; SID="+cookies["SID"],
 }
 
-def getsubs(vid, lang="all"):
-    if lang == "all":
-        lparams = (
-            ("v", vid),
-            ("ref", "player"),
-            ("o", "U"),
-        )
+def getsubs(vid):
+    langs = ['ab', 'aa', 'af', 'sq', 'ase', 'am', 'ar', 'arc', 'hy', 'as', 'ay', 'az', 'bn', 'ba', 'eu', 'be', 'bh', 'bi', 'bs', 'br', 
+    'bg', 'yue', 'yue-HK', 'ca', 'chr', 'zh-CN', 'zh-HK', 'zh-Hans', 'zh-SG', 'zh-TW', 'zh-Hant', 'cho', 'co', 'hr', 'cs', 'da', 'nl', 
+    'nl-BE', 'nl-NL', 'dz', 'en', 'en-CA', 'en-IN', 'en-IE', 'en-GB', 'en-US', 'eo', 'et', 'fo', 'fj', 'fil', 'fi', 'fr', 'fr-BE', 
+    'fr-CA', 'fr-FR', 'fr-CH', 'ff', 'gl', 'ka', 'de', 'de-AT', 'de-DE', 'de-CH', 'el', 'kl', 'gn', 'gu', 'ht', 'hak', 'hak-TW', 'ha', 
+    'iw', 'hi', 'hi-Latn', 'ho', 'hu', 'is', 'ig', 'id', 'ia', 'ie', 'iu', 'ik', 'ga', 'it', 'ja', 'jv', 'kn', 'ks', 'kk', 'km', 'rw', 
+    'tlh', 'ko', 'ku', 'ky', 'lo', 'la', 'lv', 'ln', 'lt', 'lb', 'mk', 'mg', 'ms', 'ml', 'mt', 'mni', 'mi', 'mr', 'mas', 'nan', 
+    'nan-TW', 'lus', 'mo', 'mn', 'my', 'na', 'nv', 'ne', 'no', 'oc', 'or', 'om', 'ps', 'fa', 'fa-AF', 'fa-IR', 'pl', 'pt', 'pt-BR', 
+    'pt-PT', 'pa', 'qu', 'ro', 'rm', 'rn', 'ru', 'ru-Latn', 'sm', 'sg', 'sa', 'sc', 'gd', 'sr', 'sr-Cyrl', 'sr-Latn', 'sh', 'sdp', 'sn', 
+    'scn', 'sd', 'si', 'sk', 'sl', 'so', 'st', 'es', 'es-419', 'es-MX', 'es-ES', 'es-US', 'su', 'sw', 'ss', 'sv', 'tl', 'tg', 'ta', 
+    'tt', 'te', 'th', 'bo', 'ti', 'tpi', 'to', 'ts', 'tn', 'tr', 'tk', 'tw', 'uk', 'ur', 'uz', 'vi', 'vo', 'vor', 'cy', 'fy', 'wo', 
+    'xh', 'yi', 'yo', 'zu']
 
-        langpage = requests.get("https://www.youtube.com/timedtext_video", params=lparams, headers=headers)
-
-        assert not "accounts.google.com" in langpage.url, "Please supply authentication cookie information in config.json. See README.md for more information."
-
-        langs = []
-        langsoup = BeautifulSoup(langpage.text, features="html5lib")
-
-        if "create_channel" in langpage.url:
-            print(vid, "not found.")
-        elif langsoup.find_all("div", {"class": "not-accepting-caption-submissions"}):
-            print(vid, "has disabled community-contributed captioning.")
-            langs = []
-        else:
-            langdivs = langsoup.find("ul", class_="yt-uix-languagepicker-language-list").find_all("li", class_="yt-uix-languagepicker-menu-item")
-
-            for item in langdivs:
-                langs.append(item["data-value"])
-
-            print(vid, "has the following languages available", ", ".join(langs)+".")
-    else:
-        langs = [lang]
+    mkdir(vid)
 
     for langcode in langs:
         pparams = (
@@ -81,6 +68,8 @@ def getsubs(vid, lang="all"):
 
         page = requests.get("https://www.youtube.com/timedtext_editor", params=pparams, headers=headers)
 
+        assert not "accounts.google.com" in page.url, "Please supply authentication cookie information in config.json. See README.md for more information."
+
         soup = BeautifulSoup(page.text, features="html5lib")
 
         divs = soup.find_all("div", class_="timed-event-line")
@@ -94,7 +83,7 @@ def getsubs(vid, lang="all"):
 
             outtext += timedelta_to_sbv_timestamp(timedelta(milliseconds=startms)) + "," + timedelta_to_sbv_timestamp(timedelta(milliseconds=endms)) + "\n" + text + "\n\n"
 
-        open(vid+"_"+langcode+".sbv", "w", encoding="utf-8").write(outtext[:-1])
+        open(vid+"/"+vid+"_"+langcode+".sbv", "w", encoding="utf-8").write(outtext[:-1])
 
 if __name__ == "__main__":
     from sys import argv
