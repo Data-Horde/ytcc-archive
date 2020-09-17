@@ -31,7 +31,7 @@ from datetime import timedelta
 
 from os import mkdir
 
-from json import loads
+from json import loads, dumps
 
 
 #HSID, SSID, SID cookies required
@@ -84,6 +84,14 @@ def getsubs(vid):
             outtext += timedelta_to_sbv_timestamp(timedelta(milliseconds=startms)) + "," + timedelta_to_sbv_timestamp(timedelta(milliseconds=endms)) + "\n" + text + "\n\n"
 
         open(vid+"/"+vid+"_"+langcode+".sbv", "w", encoding="utf-8").write(outtext[:-1])
+
+        if soup.find("li", id="captions-editor-nav-metadata")["data-state"] != "locked":
+            metadata = {}
+
+            metadata["title"] = soup.find("input", id="metadata-title")["value"]
+            metadata["description"] = soup.find("textarea", id="metadata-description").text
+
+            open(vid+"/"+vid+"_"+langcode+".json", "w", encoding="utf-8").write(dumps(metadata))
 
 if __name__ == "__main__":
     from sys import argv
