@@ -42,6 +42,8 @@ def getmetadata(vid):
 
             if "captions" in initplay.keys():
                 ccenabled = "contribute" in initplay["captions"]["playerCaptionsRenderer"]
+            else:
+                ccenabled = False # if captions information is not present, community contributions are not enabled
 
             recchans.add(initplay["videoDetails"]["channelId"])
         elif line.strip().startswith('window["ytInitialData"] = '):
