@@ -38,6 +38,7 @@ from json import loads, dumps
 cookies = loads(open("config.json").read())
 headers = {
     "cookie": "HSID="+cookies["HSID"]+"; SSID="+cookies["SSID"]+"; SID="+cookies["SID"],
+    "Accept-Language": "en-US",
 }
 
 def getsubs(vid):
