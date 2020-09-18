@@ -87,7 +87,10 @@ def getsubs(vid):
         if soup.find("li", id="captions-editor-nav-metadata")["data-state"] != "locked":
             metadata = {}
 
-            metadata["title"] = soup.find("input", id="metadata-title")["value"]
+            try:
+                metadata["title"] = soup.find("input", id="metadata-title")["value"]
+            except KeyError:
+                metadata["title"] = ""
             metadata["description"] = soup.find("textarea", id="metadata-description").text
 
             open("out/"+vid+"/"+vid+"_"+langcode+".json", "w", encoding="utf-8").write(dumps(metadata))
