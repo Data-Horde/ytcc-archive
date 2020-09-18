@@ -30,7 +30,7 @@ def getmetadata(vid):
 
             if initplay["playabilityStatus"]["status"] == "ERROR":
                 print(vid, "unavailable")
-                return False, recvids, recchans, recmixes, recplayl
+                return False, {}, recvids, recchans, recmixes, recplayl
             
             if "endscreen" in initplay.keys():
                 for el in initplay["endscreen"]["endscreenRenderer"]:
@@ -63,7 +63,11 @@ def getmetadata(vid):
 
                     if "compactVideoRenderer" in recmd.keys():
                         recvids.add(recmd["compactVideoRenderer"]["videoId"])
-                        recchans.add(recmd["compactVideoRenderer"]["channelId"])
+                        try:
+                            recchans.add(recmd["compactVideoRenderer"]["channelId"])
+                        except KeyError as e:
+                            print("Unable to extract channel:")
+                            print(recmd["compactVideoRenderer"])
 
                     elif "compactPlaylistRenderer" in recmd.keys():
                         recplayl.add(recmd["compactPlaylistRenderer"]["playlistId"])
