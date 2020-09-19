@@ -66,8 +66,9 @@ def getmetadata(vid):
                         try:
                             recchans.add(recmd["compactVideoRenderer"]["channelId"])
                         except KeyError as e:
-                            print("Unable to extract channel:")
-                            print(recmd["compactVideoRenderer"])
+                            print("Channel extract error")
+                            #print("Unable to extract channel:")
+                            #print(recmd["compactVideoRenderer"])
 
                     elif "compactPlaylistRenderer" in recmd.keys():
                         recplayl.add(recmd["compactPlaylistRenderer"]["playlistId"])
@@ -86,14 +87,16 @@ def getmetadata(vid):
                         try:
                             desl = langcodes[item["metadataRowRenderer"]["title"]["simpleText"].split("(", 1)[1][:-1]]
                         except KeyError as e:
-                            print(e)
+                            #print(e)
+                            print("Language code conversion error, using language name")
                             desl = item["metadataRowRenderer"]["title"]["simpleText"].split("(", 1)[1][:-1]
                         creditdata[desl] = []
                         for itemint in item["metadataRowRenderer"]["contents"]:
                             creditdata[desl].append({"name": itemint["runs"][0]["text"], "channel": itemint["runs"][0]["navigationEndpoint"]["browseEndpoint"]["browseId"]})
 
             except KeyError as e:
-                print(e)
+                print("Metadata key error")
+                #print(e)
         
         if initplay and initdata:
             break
