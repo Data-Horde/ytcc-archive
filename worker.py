@@ -3,6 +3,8 @@ from time import sleep
 from os import mkdir
 from json import dumps
 
+from shutil import make_archive, rmtree
+
 from discovery import getmetadata
 from export import getsubs
 
@@ -23,12 +25,13 @@ while True:
     else:
         print("Error in retrieving ID, will attempt again in 10 minutes")
         sleep(600)
-try:
-    mkdir("out")
-except:
-    pass
 
 while True:
+    try:
+        mkdir("out")
+    except:
+        pass
+
     recvids  = set()
     recchans = set()
     recmixes = set()
@@ -90,8 +93,22 @@ while True:
                     print("Error in retrieving subtitles, waiting 10 minutes")
                     sleep(600)
 
-            # TODO: put the data somewhere...
-            # TODO: put the discoveries somewhere...
+    # TODO: put the data somewhere...
+    # TODO: put the discoveries somewhere...
+    open("out/discoveries.json", "w").write(dumps({"recvids": sorted(recvids), "recchans": sorted(recchans), "recmixes": sorted(recmixes), "recplayl": sorted(recplayl)}))
+
+    make_archive("out.zip", "zip", "out") #check this
+
+    while True:
+        try:
+            uploadr = requests.post("https://transfersh.com/"+str(batchinfo["batchID"])+".zip", data=open("out.zip"))
+            if uploadr.status_code == 200:
+                resulturl = uploadr.text
+                break
+        except BaseException as e:
+            print(e)
+            print("Encountered error in uploading results... retrying in 10 minutes")
+            sleep(600)
 
     # Report the batch as complete (I can't think of a fail condition except for a worker exiting...)
     # TODO: handle worker exit
@@ -102,6 +119,7 @@ while True:
             ("batchID", batchinfo["batchID"]),
             ("randomKey", batchinfo["randomKey"]),
             ("status", "c"),
+            ("resulturl", resulturl),
         )
         statusrequest = requests.get(SERVER_BASE_URL+"/worker/updateStatus", params=params)
 
@@ -112,3 +130,4 @@ while True:
             sleep(600)
 
     # TODO: clear the output directory
+    rmtree("out")
