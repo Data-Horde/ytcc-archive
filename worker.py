@@ -27,8 +27,8 @@ class batchthread(threading.Thread):
                 break
             except BaseException as e:
                 print(e)
-                print("Error in retrieving information, waiting 10 minutes")
-                sleep(600)
+                print("Error in retrieving information, waiting 30 seconds")
+                sleep(30)
 
         # Add any discovered videos
         recvids.update(info[2])
@@ -52,8 +52,8 @@ class batchthread(threading.Thread):
                 if gsres:
                     break
                 else:
-                    print("Error in retrieving subtitles, waiting 10 minutes")
-                    sleep(600)
+                    print("Error in retrieving subtitles, waiting 30 seconds")
+                    sleep(30)
 
         return True
 
