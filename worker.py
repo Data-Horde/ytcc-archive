@@ -1,6 +1,7 @@
 import requests
 from time import sleep
 from os import mkdir
+from os.path import isdir
 from json import dumps
 import threading
 
@@ -28,6 +29,7 @@ class batchthread(threading.Thread):
             except BaseException as e:
                 print(e)
                 print("Error in retrieving information, waiting 30 seconds")
+                raise
                 sleep(30)
 
         # Add any discovered videos
@@ -37,7 +39,8 @@ class batchthread(threading.Thread):
         recplayl.update(info[5])
 
         if info[0] or info[1]: # ccenabled or creditdata
-            mkdir("out/"+str(item).strip())
+            if not isdir("out/"+str(item).strip()):
+                mkdir("out/"+str(item).strip())
 
         if info[1]: # creditdata
             open("out/"+str(item).strip()+"/"+str(item).strip()+"_published_credits.json", "w").write(dumps(info[1]))
@@ -103,15 +106,17 @@ while True:
     # Process the batch
     batchcontent = requests.get(batchinfo["content"]).text.split("\n")
 
-
     threads = []
-    for item in batchcontent:
-        runthread = batchthread(name = item)
-        runthread.start()
-        threads.append(runthread)
+    while batchcontent:
+        while len(threads) <= 50 and batchcontent:
+            item = batchcontent.pop(0)
+            runthread = batchthread(name = item)
+            runthread.start()
+            threads.append(runthread)
 
-    for x in threads:
-        x.join()
+        for x in threads:
+            x.join()
+            threads.remove(x)
 
     #https://stackoverflow.com/a/11968881
 
@@ -119,7 +124,7 @@ while True:
     # TODO: put the discoveries somewhere...
     open("out/discoveries.json", "w").write(dumps({"recvids": sorted(recvids), "recchans": sorted(recchans), "recmixes": sorted(recmixes), "recplayl": sorted(recplayl)}))
 
-    make_archive("out.zip", "zip", "out") #check this
+    make_archive("out", "zip", "out") #check this
 
     # while True:
     #     try:

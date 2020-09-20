@@ -1,3 +1,4 @@
+from typing import Dict
 import requests
 from json import loads
 
@@ -24,6 +25,9 @@ def getmetadata(vid):
     recmixes = set()
     recplayl = set()
 
+    ccenabled = False #default values
+    creditdata = {}
+
     for line in wptext.splitlines():
         if line.strip().startswith('window["ytInitialPlayerResponse"] = '):
             initplay = loads(line.split('window["ytInitialPlayerResponse"] = ', 1)[1].strip()[:-1])
@@ -33,26 +37,35 @@ def getmetadata(vid):
                 return False, {}, recvids, recchans, recmixes, recplayl
             
             if "endscreen" in initplay.keys():
-                for el in initplay["endscreen"]["endscreenRenderer"]:
+                if "endscreenRenderer" in initplay["endscreen"].keys():
+                    for el in initplay["endscreen"]["endscreenRenderer"]:
 
-                    elint = el["endscreenElementRenderer"]
+                        if type(el) == Dict:
+                            elint = el["endscreenElementRenderer"]
 
-                    if elint["style"] == "VIDEO":
-                        recvids.add(elint["endpoint"]["watchEndpoint"]["videoId"])
+                            if "endscreenElementRenderer" in el.keys():
+                                if elint["style"] == "VIDEO":
+                                    recvids.add(elint["endpoint"]["watchEndpoint"]["videoId"])
 
-                    elif elint["style"] == "CHANNEL":
-                        recchans.add(elint["endpoint"]["browseEndpoint"]["browseId"])
+                                elif elint["style"] == "CHANNEL":
+                                    try:
+                                        recchans.add(elint["endpoint"]["browseEndpoint"]["browseId"])
+                                    except:
+                                        print("Channel endscreen error")
+                                        raise
 
-                    elif elint["style"] == "PLAYLIST":
-                        recvids.add(elint["endpoint"]["watchEndpoint"]["videoId"])
-                        recplayl.add(elint["endpoint"]["watchEndpint"]["playlistId"])
+                                elif elint["style"] == "PLAYLIST":
+                                    recvids.add(elint["endpoint"]["watchEndpoint"]["videoId"])
+                                    recplayl.add(elint["endpoint"]["watchEndpint"]["playlistId"])
 
             if "captions" in initplay.keys():
                 ccenabled = "contribute" in initplay["captions"]["playerCaptionsRenderer"]
             else:
                 ccenabled = False # if captions information is not present, community contributions are not enabled
 
-            recchans.add(initplay["videoDetails"]["channelId"])
+            if "videoDetails" in initplay.keys():
+                if "channelId" in initplay["videoDetails"].keys():
+                    recchans.add(initplay["videoDetails"]["channelId"])
         elif line.strip().startswith('window["ytInitialData"] = '):
             initdata = loads(line.split('window["ytInitialData"] = ', 1)[1].strip()[:-1])
             if "contents" in initdata.keys(): #prevent exception
@@ -66,14 +79,20 @@ def getmetadata(vid):
                         try:
                             recchans.add(recmd["compactVideoRenderer"]["channelId"])
                         except KeyError as e:
-                            print("Channel extract error")
+                            try:
+                                recchans.add(recmd["compactVideoRenderer"]["longBylineText"]["runs"][0]["navigationEndpoint"]["browseEndpoint"]["browseId"])
+                            except KeyError as e:
+                                print("Channel extract error")
+                            #raise
                             #print("Unable to extract channel:")
                             #print(recmd["compactVideoRenderer"])
 
                     elif "compactPlaylistRenderer" in recmd.keys():
                         recplayl.add(recmd["compactPlaylistRenderer"]["playlistId"])
-                        recvids.add(recmd["compactPlaylistRenderer"]["navigationEndpoint"]["watchEndpoint"]["videoId"])
-                        recchans.add(recmd["compactPlaylistRenderer"]["shortBylineText"]["navigationEndpoint"]["browseEndpoint"]["browseId"])
+                        if "navigationEndpoint" in recmd["compactPlaylistRenderer"].keys():
+                            recvids.add(recmd["compactPlaylistRenderer"]["navigationEndpoint"]["watchEndpoint"]["videoId"])
+                        if "navigationEndpoint" in recmd["compactPlaylistRenderer"]["shortBylineText"].keys():
+                            recchans.add(recmd["compactPlaylistRenderer"]["shortBylineText"]["navigationEndpoint"]["browseEndpoint"]["browseId"])
 
                     elif "compactRadioRenderer" in recmd.keys(): #mix playlist
                         recmixes.add(recmd["compactRadioRenderer"]["playlistId"])
@@ -95,7 +114,9 @@ def getmetadata(vid):
                             creditdata[desl].append({"name": itemint["runs"][0]["text"], "channel": itemint["runs"][0]["navigationEndpoint"]["browseEndpoint"]["browseId"]})
 
             except KeyError as e:
-                print("Metadata key error")
+                #print("Video does not have credits")
+                pass
+                #raise
                 #print(e)
         
         if initplay and initdata:
