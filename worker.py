@@ -161,7 +161,7 @@ while True:
 
     subthreads = []
 
-    for r in range(5):
+    for r in range(50):
         subrunthread = Thread(target=subprrun, args=(subtjobs,headers))
         subrunthread.start()
         subthreads.append(subrunthread)

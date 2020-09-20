@@ -71,6 +71,7 @@ def subprrun(jobs, headers):
             if divs:
                 myfs.write("\n")
         del divs
+        myfs.close()
         del myfs
 
         if soup.find("li", id="captions-editor-nav-metadata")["data-state"] != "locked":
