@@ -25,26 +25,17 @@ def timedelta_to_sbv_timestamp(timedelta_timestamp):
     return "%1d:%02d:%02d.%03d" % (hrs, mins, secs, msecs)
 
 
-import requests
 from bs4 import BeautifulSoup
 from datetime import timedelta
-import threading
 
-from os import mkdir
+from json import dumps
 
-from json import loads, dumps
+import requests
 
-
-#HSID, SSID, SID cookies required
-cookies = loads(open("config.json").read())
-mysession = requests.session()
-
-mysession.headers.update({"cookie": "HSID="+cookies["HSID"]+"; SSID="+cookies["SSID"]+"; SID="+cookies["SID"], "Accept-Language": "en-US",})
-
-class subtitlethread(threading.Thread):
-    def run(self):
-        langcode, vid = self.getName().split(";", 1)
-
+def subprrun(jobs, headers):
+    while not jobs.empty():
+        langcode, vid = jobs.get()
+        print(langcode, vid)
         pparams = (
             ("v", vid),
             ("lang", langcode),
@@ -55,24 +46,32 @@ class subtitlethread(threading.Thread):
             ("o", "U")
         )
 
-        page = mysession.get("https://www.youtube.com/timedtext_editor", params=pparams)
+        page = requests.get("https://www.youtube.com/timedtext_editor", headers=headers, params=pparams)
 
         assert not "accounts.google.com" in page.url, "Please supply authentication cookie information in config.json. See README.md for more information."
 
         soup = BeautifulSoup(page.text, features="html5lib")
+        del page
 
         divs = soup.find_all("div", class_="timed-event-line")
 
-        outtext = ""
-
-        for item in divs:
+        myfs = open("out/"+vid+"/"+vid+"_"+langcode+".sbv", "w", encoding="utf-8")
+        while divs:
+            item = divs.pop(0)
             text = item.find("textarea").text
             startms = int(item.find("input", class_="event-start-time")["data-start-ms"])
             endms = int(item.find("input", class_="event-end-time")["data-end-ms"])
 
-            outtext += timedelta_to_sbv_timestamp(timedelta(milliseconds=startms)) + "," + timedelta_to_sbv_timestamp(timedelta(milliseconds=endms)) + "\n" + text + "\n\n"
-
-        open("out/"+vid+"/"+vid+"_"+langcode+".sbv", "w", encoding="utf-8").write(outtext[:-1])
+            myfs.write(timedelta_to_sbv_timestamp(timedelta(milliseconds=startms)) + "," + timedelta_to_sbv_timestamp(timedelta(milliseconds=endms)) + "\n" + text + "\n")
+            
+            del item
+            del text
+            del startms
+            del endms
+            if divs:
+                myfs.write("\n")
+        del divs
+        del myfs
 
         if soup.find("li", id="captions-editor-nav-metadata")["data-state"] != "locked":
             metadata = {}
@@ -84,42 +83,13 @@ class subtitlethread(threading.Thread):
             metadata["description"] = soup.find("textarea", id="metadata-description").text
 
             open("out/"+vid+"/"+vid+"_"+langcode+".json", "w", encoding="utf-8").write(dumps(metadata))
+            del metadata
 
-def getsubs(vid):
-    langs = ['ab', 'aa', 'af', 'sq', 'ase', 'am', 'ar', 'arc', 'hy', 'as', 'ay', 'az', 'bn', 'ba', 'eu', 'be', 'bh', 'bi', 'bs', 'br', 
-    'bg', 'yue', 'yue-HK', 'ca', 'chr', 'zh-CN', 'zh-HK', 'zh-Hans', 'zh-SG', 'zh-TW', 'zh-Hant', 'cho', 'co', 'hr', 'cs', 'da', 'nl', 
-    'nl-BE', 'nl-NL', 'dz', 'en', 'en-CA', 'en-IN', 'en-IE', 'en-GB', 'en-US', 'eo', 'et', 'fo', 'fj', 'fil', 'fi', 'fr', 'fr-BE', 
-    'fr-CA', 'fr-FR', 'fr-CH', 'ff', 'gl', 'ka', 'de', 'de-AT', 'de-DE', 'de-CH', 'el', 'kl', 'gn', 'gu', 'ht', 'hak', 'hak-TW', 'ha', 
-    'iw', 'hi', 'hi-Latn', 'ho', 'hu', 'is', 'ig', 'id', 'ia', 'ie', 'iu', 'ik', 'ga', 'it', 'ja', 'jv', 'kn', 'ks', 'kk', 'km', 'rw', 
-    'tlh', 'ko', 'ku', 'ky', 'lo', 'la', 'lv', 'ln', 'lt', 'lb', 'mk', 'mg', 'ms', 'ml', 'mt', 'mni', 'mi', 'mr', 'mas', 'nan', 
-    'nan-TW', 'lus', 'mo', 'mn', 'my', 'na', 'nv', 'ne', 'no', 'oc', 'or', 'om', 'ps', 'fa', 'fa-AF', 'fa-IR', 'pl', 'pt', 'pt-BR', 
-    'pt-PT', 'pa', 'qu', 'ro', 'rm', 'rn', 'ru', 'ru-Latn', 'sm', 'sg', 'sa', 'sc', 'gd', 'sr', 'sr-Cyrl', 'sr-Latn', 'sh', 'sdp', 'sn', 
-    'scn', 'sd', 'si', 'sk', 'sl', 'so', 'st', 'es', 'es-419', 'es-MX', 'es-ES', 'es-US', 'su', 'sw', 'ss', 'sv', 'tl', 'tg', 'ta', 
-    'tt', 'te', 'th', 'bo', 'ti', 'tpi', 'to', 'ts', 'tn', 'tr', 'tk', 'tw', 'uk', 'ur', 'uz', 'vi', 'vo', 'vor', 'cy', 'fy', 'wo', 
-    'xh', 'yi', 'yo', 'zu']
+        del soup
+        del langcode
+        del vid
+        del pparams
 
-    threads = []
-    for langcode in langs:
-        runthread = subtitlethread(name = langcode+";"+vid)
-        runthread.start()
-        threads.append(runthread)
-
-    for x in threads:
-        x.join()
+        jobs.task_done()
 
     return True
-
-if __name__ == "__main__":
-    from sys import argv
-    vidl = argv
-    vidl.pop(0)
-    for video in vidl:
-        try:
-            mkdir("out")
-        except:
-            pass
-        try:
-            mkdir("out/"+video)
-        except:
-            pass
-        getsubs(video)
