@@ -26,11 +26,45 @@ def timedelta_to_sbv_timestamp(timedelta_timestamp):
 
 
 from bs4 import BeautifulSoup
+import html.parser
 from datetime import timedelta
 
 from json import dumps
 
 import requests
+
+# https://docs.python.org/3/library/html.parser.html
+from html.parser import HTMLParser
+
+class MyHTMLParser(HTMLParser):
+    def __init__(self):
+        self.captions = []
+
+    def check_attr(self, attrs, attr, value):
+        for item in attrs:
+            if item[0] == attr and item[1] == value:
+                return True
+        return False
+
+    def get_attr(self, attrs, attr):
+        for item in attrs:
+            if item[0] == attr:
+                return item[1]
+        return False
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "input" and self.check_attr(attrs, "class", "yt-uix-form-input-text event-time-field event-start-time"):
+            self.captions.append({"startTime": self.get_attr("data-start-ms")})
+        elif tag == "input" and self.check_attr(attrs, "class", "yt-uix-form-input-text event-time-field event-end-time"):
+            self.captions[len(self.captions-1)]["endTime"] = self.get_attr("data-end-ms")})
+        elif tag == "textarea" and self.check_attr(attrs, "class", "yt-uix-form-input-textarea event-text goog-textarea"):
+            pass #do this
+
+    #def handle_endtag(self, tag):
+    #    print("Encountered an end tag :", tag)
+
+    def handle_data(self, data):
+        print("Encountered some data  :", data)
 
 def subprrun(jobs, headers):
     while not jobs.empty():
@@ -50,8 +84,10 @@ def subprrun(jobs, headers):
 
         assert not "accounts.google.com" in page.url, "Please supply authentication cookie information in config.json. See README.md for more information."
 
-        soup = BeautifulSoup(page.text, features="html5lib")
-        del page
+        parser = MyHTMLParser()
+        parser.feed(page.text)
+        #soup = BeautifulSoup(page.text, features="html5lib")
+        #del page
 
         divs = soup.find_all("div", class_="timed-event-line")
 
@@ -64,6 +100,8 @@ def subprrun(jobs, headers):
 
             myfs.write(timedelta_to_sbv_timestamp(timedelta(milliseconds=startms)) + "," + timedelta_to_sbv_timestamp(timedelta(milliseconds=endms)) + "\n" + text + "\n")
             
+            #text.decompose()
+            item.decompose()
             del item
             del text
             del startms
@@ -86,6 +124,7 @@ def subprrun(jobs, headers):
             open("out/"+vid+"/"+vid+"_"+langcode+".json", "w", encoding="utf-8").write(dumps(metadata))
             del metadata
 
+        soup.decompose()
         del soup
         del langcode
         del vid
