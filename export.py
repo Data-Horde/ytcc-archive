@@ -130,7 +130,7 @@ def subprrun(jobs, mysession):
             if '<li id="captions-editor-nav-captions" role="tab" data-state="published" class="published">' in inttext:
                 jobs.put((langcode, vid, "forceedit-captions"))
 
-        if 'id="reject-captions-button"' in inttext or 'id="reject-metadata-button"' in inttext or 'data-state="published"' in inttext or 'title="The video owner already provided subtitles/CC"' in inttext or "forceedit" in mode: #quick way of checking if this page is worth parsing
+        if 'id="reject-captions-button"' in inttext or 'id="reject-metadata-button"' in inttext or 'data-state="published"' in inttext or 'title="The video owner already provided subtitles/CC"' in inttext: #quick way of checking if this page is worth parsing
             parser = MyHTMLParser()
             parser.feed(inttext)
 
