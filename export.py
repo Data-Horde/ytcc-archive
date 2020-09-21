@@ -71,7 +71,7 @@ class MyHTMLParser(HTMLParser):
             elif 'id="metadata-description"' in self.get_starttag_text():
                 self.description += data
 
-def subprrun(jobs, headers):
+def subprrun(jobs, mysession):
     while not jobs.empty():
         collect() #cleanup memory
         langcode, vid = jobs.get()
@@ -87,7 +87,7 @@ def subprrun(jobs, headers):
             ("o", "U")
         )
 
-        page = requests.get("https://www.youtube.com/timedtext_editor", headers=headers, params=pparams)
+        page = mysession.get("https://www.youtube.com/timedtext_editor", params=pparams)
 
         assert not "accounts.google.com" in page.url, "Please supply authentication cookie information in config.json. See README.md for more information."
 

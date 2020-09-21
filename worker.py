@@ -1,8 +1,8 @@
 from threading import Thread
 import requests
 from time import sleep
-from os import mkdir, rmdir, listdir
-from os.path import isdir
+from os import mkdir, rmdir, listdir, environ
+from os.path import isdir, isfile
 from json import dumps, loads
 
 from shutil import make_archive, rmtree
@@ -40,9 +40,19 @@ recmixes = set()
 recplayl = set()
 
 #HSID, SSID, SID cookies required
-cookies = loads(open("config.json").read())
+if "HSID" in environ.keys() and "SSID" in environ.keys() and "SID" in environ.keys():
+    cookies = {"HSID": environ["HSID"], "SSID": environ["SSID"], "SID": environ["SID"]}
+elif isfile("config.json"):
+    cookies = loads(open("config.json").read())
+else:
+    print("HSID, SSID, and SID cookies from youtube.com are required. Specify in config.json or as environment variables.")
+    assert False
+if not (cookies["HSID"] and cookies["SSID"] and cookies["SID"]):
+    print("HSID, SSID, and SID cookies from youtube.com are required. Specify in config.json or as environment variables.")
+    assert False
 
-headers = {"cookie": "HSID="+cookies["HSID"]+"; SSID="+cookies["SSID"]+"; SID="+cookies["SID"], "Accept-Language": "en-US",}
+mysession = requests.session()
+mysession.headers.update({"cookie": "HSID="+cookies["HSID"]+"; SSID="+cookies["SSID"]+"; SID="+cookies["SID"], "Accept-Language": "en-US",})
 del cookies
 
 def prrun():
@@ -166,7 +176,7 @@ while True:
     subthreads = []
 
     for r in range(50):
-        subrunthread = Thread(target=subprrun, args=(subtjobs,headers))
+        subrunthread = Thread(target=subprrun, args=(subtjobs,mysession))
         subrunthread.start()
         subthreads.append(subrunthread)
         del subrunthread
