@@ -88,41 +88,46 @@ def subprrun(jobs, headers):
 
         assert not "accounts.google.com" in page.url, "Please supply authentication cookie information in config.json. See README.md for more information."
 
-        parser = MyHTMLParser()
-        parser.feed(page.text)
+        inttext = page.text
         del page
 
-        captiontext = False
-        for item in parser.captions:
-            if item["text"][:-9]:
-                captiontext = True
+        if 'id="reject-captions-button"' in inttext or 'id="reject-metadata-button"' in inttext: #quick way of checking if this page is worth parsing
+            parser = MyHTMLParser()
+            parser.feed(inttext)
 
-        if captiontext:
-            myfs = open("out/"+vid+"/"+vid+"_"+langcode+".sbv", "w", encoding="utf-8")
-            captions = parser.captions
-            captions.pop(0) #get rid of the fake one
-            while captions:
-                item = captions.pop(0)
+            captiontext = False
+            for item in parser.captions:
+                if item["text"][:-9]:
+                    captiontext = True
 
-                myfs.write(timedelta_to_sbv_timestamp(timedelta(milliseconds=item["startTime"])) + "," + timedelta_to_sbv_timestamp(timedelta(milliseconds=item["endTime"])) + "\n" + item["text"][:-9] + "\n")
-                
-                del item
-                if captions:
-                    myfs.write("\n")
-            del captions
-            myfs.close()
-            del myfs
+            if captiontext:
+                myfs = open("out/"+vid+"/"+vid+"_"+langcode+".sbv", "w", encoding="utf-8")
+                captions = parser.captions
+                captions.pop(0) #get rid of the fake one
+                while captions:
+                    item = captions.pop(0)
 
-        del captiontext
+                    myfs.write(timedelta_to_sbv_timestamp(timedelta(milliseconds=item["startTime"])) + "," + timedelta_to_sbv_timestamp(timedelta(milliseconds=item["endTime"])) + "\n" + item["text"][:-9] + "\n")
+                    
+                    del item
+                    if captions:
+                        myfs.write("\n")
+                del captions
+                myfs.close()
+                del myfs
 
-        if parser.title or parser.description[:-16]:
-            metadata = {}
-            metadata["title"] = parser.title
-            if metadata["title"] == False:
-                metadata["title"] = ""
-            metadata["description"] = parser.description[:-16]
-            open("out/"+vid+"/"+vid+"_"+langcode+".json", "w", encoding="utf-8").write(dumps(metadata))
-            del metadata
+            del captiontext
+
+            if parser.title or parser.description[:-16]:
+                metadata = {}
+                metadata["title"] = parser.title
+                if metadata["title"] == False:
+                    metadata["title"] = ""
+                metadata["description"] = parser.description[:-16]
+                open("out/"+vid+"/"+vid+"_"+langcode+".json", "w", encoding="utf-8").write(dumps(metadata))
+                del metadata
+
+        del inttext
 
         del langcode
         del vid
