@@ -157,7 +157,7 @@ def mark_item_as_done(item_name: str, item_size_bytes: int) -> bool:
     return False
 
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
     # print(add_item_to_tracker(ItemType.Channel, "test6"))
     # print(request_item_from_tracker())
     # print(request_upload_target())
