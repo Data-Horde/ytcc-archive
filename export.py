@@ -57,16 +57,16 @@ class MyHTMLParser(HTMLParser):
         return False
 
     def handle_starttag(self, tag, attrs):
-        if tag == "input" and self.check_attr(attrs, "class", "yt-uix-form-input-text event-time-field event-start-time") and not ' data-segment-id="" ' in self.get_starttag_text():
+        if tag == "input" and self.check_attr(attrs, "class", "yt-uix-form-input-text event-time-field event-start-time"):
             self.captions.append({"startTime": int(self.get_attr(attrs, "data-start-ms")), "text": ""})
-        elif tag == "input" and self.check_attr(attrs, "class", "yt-uix-form-input-text event-time-field event-end-time") and not ' data-segment-id="" ' in self.get_starttag_text():
+        elif tag == "input" and self.check_attr(attrs, "class", "yt-uix-form-input-text event-time-field event-end-time"):
             self.captions[len(self.captions)-1]["endTime"] = int(self.get_attr(attrs, "data-end-ms"))
         elif tag == "input" and self.check_attr(attrs, "id", "metadata-title"):
             self.title = self.get_attr(attrs, "value")
 
     def handle_data(self, data):
         if self.get_starttag_text() and self.get_starttag_text().startswith("<textarea "):
-            if 'name="serve_text"' in self.get_starttag_text() and not 'data-segment-id=""' in self.get_starttag_text():
+            if 'name="serve_text"' in self.get_starttag_text():
                 self.captions[len(self.captions)-1]["text"] += data
             elif 'id="metadata-description"' in self.get_starttag_text():
                 self.description += data
@@ -94,7 +94,7 @@ def subprrun(jobs, mysession):
         inttext = page.text
         del page
 
-        if 'id="reject-captions-button"' in inttext or 'id="reject-metadata-button"' in inttext: #quick way of checking if this page is worth parsing
+        if 'id="reject-captions-button"' in inttext or 'id="reject-metadata-button"' in inttext or 'data-state="published"' in inttext or 'title="The video owner already provided subtitles/CC"' in inttext: #quick way of checking if this page is worth parsing
             parser = MyHTMLParser()
             parser.feed(inttext)
 
