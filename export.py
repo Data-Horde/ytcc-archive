@@ -29,6 +29,8 @@ from datetime import timedelta
 
 from json import dumps
 
+from gc import collect
+
 import requests
 
 # https://docs.python.org/3/library/html.parser.html
@@ -71,6 +73,7 @@ class MyHTMLParser(HTMLParser):
 
 def subprrun(jobs, headers):
     while not jobs.empty():
+        collect() #cleanup memory
         langcode, vid = jobs.get()
         vid = vid.strip()
         print(langcode, vid)

@@ -9,6 +9,8 @@ from shutil import make_archive, rmtree
 
 from queue import Queue
 
+from gc import collect
+
 from discovery import getmetadata
 from export import subprrun
 
@@ -99,6 +101,8 @@ while True:
         sleep(600)
 
 while True:
+    collect() #cleanup
+
     try:
         mkdir("out")
     except:
