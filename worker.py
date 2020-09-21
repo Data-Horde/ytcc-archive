@@ -1,7 +1,7 @@
 from threading import Thread
 import requests
 from time import sleep
-from os import mkdir
+from os import mkdir, rmdir, listdir
 from os.path import isdir
 from json import dumps, loads
 
@@ -168,20 +168,18 @@ while True:
         del subrunthread
 
     for xa in subthreads:
-        xa.join()
+        xa.join() #bug (occurred once: the script ended before the last thread finished)
         subthreads.remove(xa)
         del xa
-    # while True:
-    #     gsres = False
-    #     try:
-    #         gsres = getsubs(str(item).strip())
-    #     except BaseException as e:
-    #         print(e)
-    #     if gsres:
-    #         break
-    #     else:
-    #         print("Error in retrieving subtitles, waiting 30 seconds")
-    #         sleep(30)
+
+    sleep(1) #wait a second to hopefully allow the other threads to finish
+
+    for fol in listdir("out"): #remove extra folders
+        try:
+            if isdir("out/"+fol):
+                rmdir("out/"+fol)
+        except:
+            pass
 
     #https://stackoverflow.com/a/11968881
 
