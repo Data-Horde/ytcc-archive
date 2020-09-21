@@ -74,27 +74,63 @@ class MyHTMLParser(HTMLParser):
 def subprrun(jobs, mysession):
     while not jobs.empty():
         collect() #cleanup memory
-        langcode, vid = jobs.get()
+        langcode, vid, mode = jobs.get()
         vid = vid.strip()
         print(langcode, vid)
-        pparams = (
-            ("v", vid),
-            ("lang", langcode),
-            ("action_mde_edit_form", 1),
-            ("bl", "vmp"),
-            ("ui", "hd"),
-            ("tab", "captions"),
-            ("o", "U")
-        )
 
-        page = mysession.get("https://www.youtube.com/timedtext_editor", params=pparams)
+        if mode == "default":
+            pparams = (
+                ("v", vid),
+                ("lang", langcode),
+                ("action_mde_edit_form", 1),
+                ("bl", "vmp"),
+                ("ui", "hd"),
+                ("tab", "captions"),
+                ("o", "U")
+            )
+
+            page = mysession.get("https://www.youtube.com/timedtext_editor", params=pparams)
+        elif mode == "forceedit-metadata":
+            pparams = (
+                ("v", vid),
+                ("lang", langcode),
+                ("action_mde_edit_form", 1),
+                ('forceedit', 'metadata'),
+                ('tab', 'metadata')
+            )
+
+            page = mysession.get("https://www.youtube.com/timedtext_editor", params=pparams)
+        elif mode == "forceedit-captions":
+            pparams = (
+                ("v", vid),
+                ("lang", langcode),
+                ("action_mde_edit_form", 1),
+                ("bl", "vmp"),
+                ("ui", "hd"),
+                ('forceedit', 'captions'),
+                ("tab", "captions"),
+                ("o", "U")
+            )
+
+            page = mysession.get("https://www.youtube.com/timedtext_editor", params=pparams)
 
         assert not "accounts.google.com" in page.url, "Please supply authentication cookie information in config.json. See README.md for more information."
 
         inttext = page.text
         del page
 
-        if 'id="reject-captions-button"' in inttext or 'id="reject-metadata-button"' in inttext or 'data-state="published"' in inttext or 'title="The video owner already provided subtitles/CC"' in inttext: #quick way of checking if this page is worth parsing
+        filestring = ""
+        if "forceedit" in mode:
+            filestring = "_community"
+
+        if not "forceedit" in mode:
+            if '&amp;forceedit=metadata&amp;tab=metadata">See latest</a>' in inttext:
+                jobs.put((langcode, vid, "forceedit-metadata"))
+
+            if '<li id="captions-editor-nav-captions" role="tab" data-state="published" class="published">' in inttext:
+                jobs.put((langcode, vid, "forceedit-captions"))
+
+        if 'id="reject-captions-button"' in inttext or 'id="reject-metadata-button"' in inttext or 'data-state="published"' in inttext or 'title="The video owner already provided subtitles/CC"' in inttext or "forceedit" in mode: #quick way of checking if this page is worth parsing
             parser = MyHTMLParser()
             parser.feed(inttext)
 
@@ -103,8 +139,8 @@ def subprrun(jobs, mysession):
                 if item["text"][:-9]:
                     captiontext = True
 
-            if captiontext:
-                myfs = open("out/"+vid+"/"+vid+"_"+langcode+".sbv", "w", encoding="utf-8")
+            if captiontext and (mode == "default" or mode == "forceedit-captions"):
+                myfs = open("out/"+vid+"/"+vid+"_"+langcode+filestring+".sbv", "w", encoding="utf-8")
                 captions = parser.captions
                 captions.pop(0) #get rid of the fake one
                 while captions:
@@ -121,13 +157,13 @@ def subprrun(jobs, mysession):
 
             del captiontext
 
-            if parser.title or parser.description[:-16]:
+            if parser.title or parser.description[:-16] and (mode == "default" or mode == "forceedit-metadata"):
                 metadata = {}
                 metadata["title"] = parser.title
                 if metadata["title"] == False:
                     metadata["title"] = ""
                 metadata["description"] = parser.description[:-16]
-                open("out/"+vid+"/"+vid+"_"+langcode+".json", "w", encoding="utf-8").write(dumps(metadata))
+                open("out/"+vid+"/"+vid+"_"+langcode+filestring+".json", "w", encoding="utf-8").write(dumps(metadata))
                 del metadata
 
         del inttext
@@ -188,7 +224,7 @@ if __name__ == "__main__":
         except:
             pass
         for lang in langs:
-            jobs.put((lang, video))
+            jobs.put((lang, video, "default"))
 
     subthreads = []
 
