@@ -38,7 +38,6 @@ class MyHTMLParser(HTMLParser):
     def __init__(self):
         HTMLParser.__init__(self)
         self.captions = []
-        self.captiontext = True
         self.title = ""
         self.description = ""
 
@@ -60,25 +59,13 @@ class MyHTMLParser(HTMLParser):
             self.captions.append({"startTime": int(self.get_attr(attrs, "data-start-ms")), "text": ""})
         elif tag == "input" and self.check_attr(attrs, "class", "yt-uix-form-input-text event-time-field event-end-time") and not ' data-segment-id="" ' in self.get_starttag_text():
             self.captions[len(self.captions)-1]["endTime"] = int(self.get_attr(attrs, "data-end-ms"))
-        # elif tag == "textarea" and self.check_attr(attrs, "class", "yt-uix-form-input-textarea event-text goog-textarea"):
-        #     if len(self.captions):
-        #         self.datatarget = len(self.captions)-1
-        #     else:
-        #         self.datatarget = 0
         elif tag == "input" and self.check_attr(attrs, "id", "metadata-title"):
             self.title = self.get_attr(attrs, "value")
-        # elif tag == "textarea" and self.check_attr(attrs, "id", "metadata-description"):
-        #     self.datatarget = "description"
-
-    # def handle_endtag(self, tag):
-    #     if tag == "textarea":
-    #         self.datatarget = None
 
     def handle_data(self, data):
         if self.get_starttag_text() and self.get_starttag_text().startswith("<textarea "):
             if 'name="serve_text"' in self.get_starttag_text() and not 'data-segment-id=""' in self.get_starttag_text():
                 self.captions[len(self.captions)-1]["text"] += data
-                self.captiontext = True
             elif 'id="metadata-description"' in self.get_starttag_text():
                 self.description += data
 
@@ -105,7 +92,12 @@ def subprrun(jobs, headers):
         parser.feed(page.text)
         del page
 
-        if parser.captiontext:
+        captiontext = False
+        for item in parser.captions:
+            if item["text"][:-9]:
+                captiontext = True
+
+        if captiontext:
             myfs = open("out/"+vid+"/"+vid+"_"+langcode+".sbv", "w", encoding="utf-8")
             captions = parser.captions
             captions.pop(0) #get rid of the fake one
@@ -121,9 +113,13 @@ def subprrun(jobs, headers):
             myfs.close()
             del myfs
 
-        if parser.title or parser.description:
+        del captiontext
+
+        if parser.title or parser.description[:-16]:
             metadata = {}
             metadata["title"] = parser.title
+            if metadata["title"] == False:
+                metadata["title"] = ""
             metadata["description"] = parser.description[:-16]
             open("out/"+vid+"/"+vid+"_"+langcode+".json", "w", encoding="utf-8").write(dumps(metadata))
             del metadata
