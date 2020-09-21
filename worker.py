@@ -168,9 +168,11 @@ while True:
         del subrunthread
 
     for xa in subthreads:
-        xa.join()
+        xa.join() #bug (occurred once: the script ended before the last thread finished)
         subthreads.remove(xa)
         del xa
+
+    sleep(1)
     # while True:
     #     gsres = False
     #     try:
