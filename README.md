@@ -1,5 +1,5 @@
 # YouTube Community Contributions Archiving Worker
-Export YouTube community-contributed captioning drafts to SBV files. Export YouTube community-contributed titles and descriptions to JSON (coming soon).
+Export YouTube community-contributed captioning drafts to SBV files. Export YouTube community-contributed titles and descriptions to JSON. Export published caption credits to JSON.
 
 ## Setup
 Install the requirements in the requirements.txt file (`pip install -r requirements.txt`). Because the captioning editor is only available to logged-in users, you must specify the values of three session cookies for any Google account (`HSID`, `SSID`, and `SID`). You can get these cookie values by opening the developer tools on any youtube.com webpage, going to the "Application" (Chrome) or "Storage" (Firefox) tab, selecting "Cookies", and copying the required values.
