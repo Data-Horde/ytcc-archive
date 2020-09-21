@@ -161,6 +161,7 @@ if __name__ == "__main__":
     del cookies
     from sys import argv
     from queue import Queue
+    from threading import Thread
     langs = ['ab', 'aa', 'af', 'sq', 'ase', 'am', 'ar', 'arc', 'hy', 'as', 'ay', 'az', 'bn', 'ba', 'eu', 'be', 'bh', 'bi', 'bs', 'br', 
     'bg', 'yue', 'yue-HK', 'ca', 'chr', 'zh-CN', 'zh-HK', 'zh-Hans', 'zh-SG', 'zh-TW', 'zh-Hant', 'cho', 'co', 'hr', 'cs', 'da', 'nl', 
     'nl-BE', 'nl-NL', 'dz', 'en', 'en-CA', 'en-IN', 'en-IE', 'en-GB', 'en-US', 'eo', 'et', 'fo', 'fj', 'fil', 'fi', 'fr', 'fr-BE', 
@@ -189,4 +190,15 @@ if __name__ == "__main__":
         for lang in langs:
             jobs.put((lang, video))
 
-    subprrun(jobs, mysession)
+    subthreads = []
+
+    for r in range(50):
+        subrunthread = Thread(target=subprrun, args=(jobs,mysession))
+        subrunthread.start()
+        subthreads.append(subrunthread)
+        del subrunthread
+
+    for xa in subthreads:
+        xa.join() #bug (occurred once: the script ended before the last thread finished)
+        subthreads.remove(xa)
+        del xa
