@@ -119,8 +119,12 @@ def subprrun(jobs, mysession):
         inttext = page.text
         del page
 
-        filestring = ""
-        if "forceedit" in mode:
+        filestring = "_community"
+        
+        if '<li id="captions-editor-nav-captions" role="tab" data-state="published" class="published">' in inttext:
+            filestring = "_published"
+
+        if mode == "forceedit-captions":
             filestring = "_community_revised"
 
         if not "forceedit" in mode:
@@ -163,6 +167,13 @@ def subprrun(jobs, mysession):
                 if metadata["title"] == False:
                     metadata["title"] = ""
                 metadata["description"] = parser.description[:-16]
+
+                filestring = "_community"
+                if '<li id="captions-editor-nav-metadata" role="tab" data-state="published" class="published">' in inttext:
+                    filestring = "_published"
+
+                if mode == "forceedit-metadata":
+                    filestring = "_community_revised"
                 open("out/"+vid+"/"+vid+"_"+langcode+filestring+".json", "w", encoding="utf-8").write(dumps(metadata))
                 del metadata
 
