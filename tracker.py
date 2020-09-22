@@ -15,6 +15,12 @@ BACKFEED_HOST = "blackbird-amqp.meo.ws:23038"
 BACKFEED_ENDPOINT = f"http://{BACKFEED_HOST}/{TRACKER_ID}-kj57sxhhzcn2kqjp/"
 TRACKER_ENDPOINT = f"http://{TRACKER_HOST}/{TRACKER_ID}"
 
+from os import environ
+if "TRACKER_USERNAME" in environ.keys():
+    TRACKER_USERNAME = environ["TRACKER_USERNAME"]
+else:
+    TRACKER_USERNAME = "Unnamed"
+
 mysession = requests.session()
 
 
@@ -64,7 +70,7 @@ def request_item_from_tracker() -> Optional[str]:
         # TODO: Ask Fusl what this should be
         # https://www.archiveteam.org/index.php?title=Dev/Seesaw
         # ^ says it would be filled in by the Seesaw library
-        "downloader": "Fusl",
+        "downloader": TRACKER_USERNAME,
         "api_version": "2",
         "version": VERSION
     }
@@ -133,7 +139,7 @@ def mark_item_as_done(item_name: str, item_size_bytes: int) -> bool:
         # TODO: Ask Fusl what this should be
         # https://www.archiveteam.org/index.php?title=Dev/Seesaw
         # ^ says it would be filled in by the Seesaw library
-        "downloader": "Fusl",
+        "downloader": TRACKER_USERNAME,
         "version": VERSION,
         "item": item_name,
         "bytes": {
