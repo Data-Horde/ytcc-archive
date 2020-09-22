@@ -7,6 +7,8 @@ from json import dumps, loads
 
 import signal
 
+from youtube_dl.utils import DownloadError
+
 import tracker
 
 from youtube_dl import YoutubeDL
@@ -108,13 +110,25 @@ def prrun():
         ydl = YoutubeDL({"extract_flat": "in_playlist", "simulate": True, "skip_download": True, "quiet": True})
         for chaninfo in info[3]:
             if chaninfo not in recchans:
-                y = ydl.extract_info("https://www.youtube.com/channel/"+chaninfo, download=False)
+                while True:
+                    try:
+                        y = ydl.extract_info("https://www.youtube.com/channel/"+chaninfo, download=False)
+                        break
+                    except DownloadError:
+                        sleep(30)
+                sleep(5) #prevent error 429
                 for itemyv in y["entries"]:
                     recvids.add(itemyv["id"])
 
         for playlinfo in info[5]:
             if playlinfo not in recplayl:
-                y = ydl.extract_info("https://www.youtube.com/playlist?list="+playlinfo, download=False)
+                while True:
+                    try:
+                        y = ydl.extract_info("https://www.youtube.com/playlist?list="+playlinfo, download=False)
+                        break
+                    except DownloadError:
+                        sleep(30)
+                sleep(5) #prevent error 429
                 for itemyvp in y["entries"]:
                     recvids.add(itemyvp["id"])
 
