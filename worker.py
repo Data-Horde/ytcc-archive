@@ -140,8 +140,11 @@ while not gkiller.kill_now:
         batchcontent.append(tracker.request_item_from_tracker())
 
     for desit in batchcontent:
-        if desit.split(":", 1)[0] == "video":
-            jobs.put(desit)
+        if desit:
+            if desit.split(":", 1)[0] == "video":
+                jobs.put(desit)
+            else:
+                print("Ignoring item for now", desit)
         else:
             print("Ignoring item for now", desit)
 
