@@ -15,6 +15,8 @@ BACKFEED_HOST = "blackbird-amqp.meo.ws:23038"
 BACKFEED_ENDPOINT = f"http://{BACKFEED_HOST}/{TRACKER_ID}-kj57sxhhzcn2kqjp/"
 TRACKER_ENDPOINT = f"http://{TRACKER_HOST}/{TRACKER_ID}"
 
+mysession = requests.session()
+
 
 class ItemType(Enum):
     Video = auto()
@@ -36,7 +38,7 @@ def add_item_to_tracker(item_type: ItemType, item_id: str) -> bool:
     type_name = item_type.name.lower()
     item_name = f"{type_name}:{item_id}"
 
-    req = requests.post(BACKFEED_ENDPOINT, data=item_name)
+    req = mysession.post(BACKFEED_ENDPOINT, data=item_name)
 
     code = req.status_code
 
@@ -67,7 +69,7 @@ def request_item_from_tracker() -> Optional[str]:
         "version": VERSION
     }
 
-    req = requests.post(f"{TRACKER_ENDPOINT}/request", json=data)
+    req = mysession.post(f"{TRACKER_ENDPOINT}/request", json=data)
 
     code = req.status_code
 
@@ -87,7 +89,7 @@ def request_item_from_tracker() -> Optional[str]:
 
 
 def request_upload_target() -> Optional[str]:
-    req = requests.get(
+    req = mysession.get(
         # "https://httpbin.org/get",
         f"{TRACKER_ENDPOINT}/upload",
     )
@@ -109,7 +111,7 @@ def request_upload_target() -> Optional[str]:
 
 
 def request_all_upload_targets() -> Optional[List[str]]:
-    req = requests.get(
+    req = mysession.get(
         # "https://httpbin.org/get",
         f"{TRACKER_ENDPOINT}/upload",
     )
@@ -139,7 +141,7 @@ def mark_item_as_done(item_name: str, item_size_bytes: int) -> bool:
         }
     }
 
-    req = requests.post(f"{TRACKER_ENDPOINT}/done", json=data)
+    req = mysession.post(f"{TRACKER_ENDPOINT}/done", json=data)
 
     code = req.status_code
 
