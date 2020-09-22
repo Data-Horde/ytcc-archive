@@ -114,7 +114,7 @@ def prrun():
                     try:
                         y = ydl.extract_info("https://www.youtube.com/channel/"+chaninfo, download=False)
                         break
-                    except DownloadError:
+                    except:
                         sleep(30)
                 sleep(5) #prevent error 429
                 for itemyv in y["entries"]:
@@ -126,7 +126,7 @@ def prrun():
                     try:
                         y = ydl.extract_info("https://www.youtube.com/playlist?list="+playlinfo, download=False)
                         break
-                    except DownloadError:
+                    except:
                         sleep(30)
                 sleep(5) #prevent error 429
                 for itemyvp in y["entries"]:
