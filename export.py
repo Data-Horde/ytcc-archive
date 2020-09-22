@@ -42,6 +42,8 @@ class MyHTMLParser(HTMLParser):
         self.captions = []
         self.title = ""
         self.description = ""
+        self.inittitle = ""
+        self.initdescription = ""
 
 
     def check_attr(self, attrs, attr, value):
@@ -63,6 +65,10 @@ class MyHTMLParser(HTMLParser):
             self.captions[len(self.captions)-1]["endTime"] = int(self.get_attr(attrs, "data-end-ms"))
         elif tag == "input" and self.check_attr(attrs, "id", "metadata-title"):
             self.title = self.get_attr(attrs, "value")
+        elif tag == "textarea" and self.check_attr(attrs, "id", "metadata-description"):
+            self.initdescription = self.get_attr(attrs, "data-original-description")
+        elif tag == "input" and self.check_attr(attrs, "id", "metadata-title"):
+            self.inittitle = self.get_attr(attrs, "data-original-title")
 
     def handle_data(self, data):
         if self.get_starttag_text() and self.get_starttag_text().startswith("<textarea "):
@@ -114,18 +120,24 @@ def subprrun(jobs, mysession):
 
             page = mysession.get("https://www.youtube.com/timedtext_editor", params=pparams)
 
-        assert not "accounts.google.com" in page.url, "Please supply authentication cookie information in config.json. See README.md for more information."
+        assert not "accounts.google.com" in page.url, "Please supply authentication cookie information in config.json or environment variables. See README.md for more information."
 
         inttext = page.text
+
+        try:
+            initlang = page.text.split("'metadataLanguage': \"", 1)[1].split('"', 1)[0]
+        except:
+            initlang = ""
+
         del page
 
-        filestring = "_community"
+        filestring = "_community_draft"
         
         if '<li id="captions-editor-nav-captions" role="tab" data-state="published" class="published">' in inttext:
-            filestring = "_published"
+            filestring = "_community_published"
 
         if mode == "forceedit-captions":
-            filestring = "_community_revised"
+            filestring = "_community_draft"
 
         if 'title="The video owner already provided subtitles/CC"' in inttext:
             filestring = "_uploader_provided"
@@ -164,20 +176,31 @@ def subprrun(jobs, mysession):
 
             del captiontext
 
-            if parser.title or parser.description[:-16] and (mode == "default" or mode == "forceedit-metadata"):
+            if (parser.title or parser.description[:-16]) and (mode == "default" or mode == "forceedit-metadata"):
                 metadata = {}
                 metadata["title"] = parser.title
                 if metadata["title"] == False:
                     metadata["title"] = ""
                 metadata["description"] = parser.description[:-16]
 
-                filestring = "_community"
+                filestring = "_community_draft"
                 if '<li id="captions-editor-nav-metadata" role="tab" data-state="published" class="published">' in inttext:
-                    filestring = "_published"
+                    filestring = "_community_published"
 
                 if mode == "forceedit-metadata":
-                    filestring = "_community_revised"
+                    filestring = "_community_draft"
                 open("out/"+vid+"/"+vid+"_"+langcode+filestring+".json", "w", encoding="utf-8").write(dumps(metadata))
+                del metadata
+
+            if (parser.inittitle or parser.initdescription) and (mode == "default" or mode == "forceedit-metadata" and initlang):
+                metadata = {}
+                metadata["title"] = parser.inittitle
+                if metadata["title"] == False:
+                    metadata["title"] = ""
+                metadata["description"] = parser.initdescription
+
+                filestring = "_uploader_provided"
+                open("out/"+vid+"/"+vid+"_"+initlang+filestring+".json", "w", encoding="utf-8").write(dumps(metadata))
                 del metadata
 
         del inttext
