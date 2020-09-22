@@ -1,8 +1,9 @@
 from typing import Optional, List
 from enum import Enum, auto
-import requests
 
-# TODO: Implement backoff for 500 response codes
+import requests
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
 
 # https://github.com/ArchiveTeam/tencent-weibo-grab/blob/9bae5f9747e014db9227821a9c11557267967023/pipeline.py
 VERSION = "20200921.01"
@@ -14,6 +15,19 @@ BACKFEED_HOST = "blackbird-amqp.meo.ws:23038"
 
 BACKFEED_ENDPOINT = f"http://{BACKFEED_HOST}/{TRACKER_ID}-kj57sxhhzcn2kqjp/"
 TRACKER_ENDPOINT = f"http://{TRACKER_HOST}/{TRACKER_ID}"
+
+
+# https://findwork.dev/blog/advanced-usage-python-requests-timeouts-retries-hooks/
+retry_strategy = Retry(
+    total=4,
+    backoff_factor=2,
+    status_forcelist=[x for x in range(500, 600)] + [429],
+    method_whitelist=["GET", "POST"]
+)
+adapter = HTTPAdapter(max_retries=retry_strategy)
+tracker_session = requests.Session()
+tracker_session.mount("https://", adapter)
+tracker_session.mount("http://", adapter)
 
 
 class ItemType(Enum):
@@ -36,7 +50,7 @@ def add_item_to_tracker(item_type: ItemType, item_id: str) -> bool:
     type_name = item_type.name.lower()
     item_name = f"{type_name}:{item_id}"
 
-    req = requests.post(BACKFEED_ENDPOINT, data=item_name)
+    req = tracker_session.post(BACKFEED_ENDPOINT, data=item_name)
 
     code = req.status_code
 
@@ -59,15 +73,12 @@ def add_item_to_tracker(item_type: ItemType, item_id: str) -> bool:
 def request_item_from_tracker() -> Optional[str]:
 
     data = {
-        # TODO: Ask Fusl what this should be
-        # https://www.archiveteam.org/index.php?title=Dev/Seesaw
-        # ^ says it would be filled in by the Seesaw library
         "downloader": "Fusl",
         "api_version": "2",
         "version": VERSION
     }
 
-    req = requests.post(f"{TRACKER_ENDPOINT}/request", json=data)
+    req = tracker_session.post(f"{TRACKER_ENDPOINT}/request", json=data)
 
     code = req.status_code
 
@@ -87,10 +98,7 @@ def request_item_from_tracker() -> Optional[str]:
 
 
 def request_upload_target() -> Optional[str]:
-    req = requests.get(
-        # "https://httpbin.org/get",
-        f"{TRACKER_ENDPOINT}/upload",
-    )
+    req = tracker_session.get(f"{TRACKER_ENDPOINT}/upload")
 
     code = req.status_code
 
@@ -109,10 +117,7 @@ def request_upload_target() -> Optional[str]:
 
 
 def request_all_upload_targets() -> Optional[List[str]]:
-    req = requests.get(
-        # "https://httpbin.org/get",
-        f"{TRACKER_ENDPOINT}/upload",
-    )
+    req = tracker_session.get(f"{TRACKER_ENDPOINT}/upload")
 
     code = req.status_code
 
@@ -128,9 +133,6 @@ def request_all_upload_targets() -> Optional[List[str]]:
 def mark_item_as_done(item_name: str, item_size_bytes: int) -> bool:
 
     data = {
-        # TODO: Ask Fusl what this should be
-        # https://www.archiveteam.org/index.php?title=Dev/Seesaw
-        # ^ says it would be filled in by the Seesaw library
         "downloader": "Fusl",
         "version": VERSION,
         "item": item_name,
@@ -139,7 +141,7 @@ def mark_item_as_done(item_name: str, item_size_bytes: int) -> bool:
         }
     }
 
-    req = requests.post(f"{TRACKER_ENDPOINT}/done", json=data)
+    req = tracker_session.post(f"{TRACKER_ENDPOINT}/done", json=data)
 
     code = req.status_code
 
@@ -148,17 +150,15 @@ def mark_item_as_done(item_name: str, item_size_bytes: int) -> bool:
         return True
     elif code > 399 and code < 500:
         print(f"[ERROR] Unable to mark item as done. Status: {code}")
-    elif code > 499 and code < 600:
-        # TODO: retry here
-        pass
     else:
         print(f"[ERROR] Unknown response code while marking item \'{item_name}\' as done: {code}")
 
     return False
 
 
-if __name__ == "__main__":
-    # print(add_item_to_tracker(ItemType.Channel, "test6"))
+# if __name__ == "__main__":
+
+    # print(add_item_to_tracker(ItemType.Channel, "test10"))
     # print(request_item_from_tracker())
     # print(request_upload_target())
     # print(request_all_upload_targets())
