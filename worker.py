@@ -224,9 +224,9 @@ while not gkiller.kill_now:
     #open("out/discoveries.json", "w").write(dumps({"recvids": sorted(recvids), "recchans": sorted(recchans), "recmixes": sorted(recmixes), "recplayl": sorted(recplayl)}))
     #clear
     recvids.clear()
-    recchans.clear()
+    # recchans.clear()
     recmixes.clear()
-    recplayl.clear()
+    # recplayl.clear()
 
     submitthreads = []
 
