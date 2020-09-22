@@ -290,7 +290,7 @@ while not gkiller.kill_now:
             print("Waiting 5 minutes...")
             sleep(300)
 
-    system("rsync -rltv --timeout=300 --contimeout=300 --progress --bwlimit 0 --recursive --partial --partial-dir .rsync-tmp --min-size 1 --no-compress --compress-level 0 --files-from=- /directory/ "+targetloc)
+    system("rsync -rltv --timeout=300 --contimeout=300 --progress --bwlimit 0 --recursive --partial --partial-dir .rsync-tmp --min-size 1 --no-compress --compress-level 0 --files-from=- directory/ "+targetloc)
 
     # Report the batch as complete
     for itemb in batchcontent:
