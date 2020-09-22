@@ -290,15 +290,21 @@ while not gkiller.kill_now:
             print("Waiting 5 minutes...")
             sleep(300)
 
-    system("rsync -rltv --timeout=300 --contimeout=300 --progress --bwlimit 0 --recursive --partial --partial-dir .rsync-tmp --min-size 1 --no-compress --compress-level 0 --files-from=- directory/ "+targetloc)
+    if targetloc.startswith("rsync"):
+        system("rsync -rltv --timeout=300 --contimeout=300 --progress --bwlimit 0 --recursive --partial --partial-dir .rsync-tmp --min-size 1 --no-compress --compress-level 0 --files-from=- directory/ "+targetloc)
+    elif targetloc.startswith("http"):
+        for filzip in listdir("directory"):
+            if filzip.endswith(".zip"):
+                system("curl --data-binary @directory/"+filzip+" "+targetloc)
 
     # Report the batch as complete
     for itemb in batchcontent:
-        if isfile("out/"+itemb.split(":", 1)[1]+".zip"):
-            size = getsize("out/"+itemb.split(":", 1)[1]+".zip")
+        if isfile("directory/"+itemb.split(":", 1)[1]+".zip"):
+            size = getsize("directory/"+itemb.split(":", 1)[1]+".zip")
         else:
             size = 0
         tracker.mark_item_as_done(itemb, size)
 
     # clear the output directory
     rmtree("out")
+    rmtree("directory")
