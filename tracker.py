@@ -117,7 +117,7 @@ def request_upload_target() -> Optional[str]:
 
 
 def request_all_upload_targets() -> Optional[List[str]]:
-    req = tracker_session.get(f"{TRACKER_ENDPOINT}/upload")
+    req = tracker_session.get(f"{TRACKER_ENDPOINT}/upload_targets")
 
     code = req.status_code
 
