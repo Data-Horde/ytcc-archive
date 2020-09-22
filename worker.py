@@ -161,7 +161,15 @@ while not gkiller.kill_now:
         threads.remove(x)
         del x
 
-    open("out/discoveries.json", "w").write(dumps({"recvids": sorted(recvids), "recchans": sorted(recchans), "recmixes": sorted(recmixes), "recplayl": sorted(recplayl)}))
+    print("Sending discoveries to tracker...")
+    #don't send channels and playlists as those have already been converted for video IDs
+    #IDK how to handle mixes so send them for now
+    for itemvid in recvids:
+        tracker.add_item_to_tracker(tracker.ItemType.Video, itemvid)
+
+    for itemmix in recvids:
+        tracker.add_item_to_tracker(tracker.ItemType.MixPlaylist, itemmix)
+    #open("out/discoveries.json", "w").write(dumps({"recvids": sorted(recvids), "recchans": sorted(recchans), "recmixes": sorted(recmixes), "recplayl": sorted(recplayl)}))
     #clear
     recvids.clear()
     recchans.clear()
@@ -193,15 +201,6 @@ while not gkiller.kill_now:
         del xa
 
     sleep(1) #wait a second to hopefully allow the other threads to finish
-
-    print("Sending discoveries to tracker...")
-    #don't send channels and playlists as those have already been converted for video IDs
-    #IDK how to handle mixes so send them for now
-    for itemvid in recvids:
-        tracker.add_item_to_tracker(tracker.ItemType.Video, itemvid)
-
-    for itemmix in recvids:
-        tracker.add_item_to_tracker(tracker.ItemType.MixPlaylist, itemmix)
 
     for fol in listdir("out"): #remove extra folders
         try:
