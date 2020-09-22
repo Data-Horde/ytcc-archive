@@ -88,6 +88,17 @@ if not (cookies["HSID"] and cookies["SSID"] and cookies["SID"]):
 mysession = requests.session()
 mysession.headers.update({"cookie": "HSID="+cookies["HSID"]+"; SSID="+cookies["SSID"]+"; SID="+cookies["SID"], "Accept-Language": "en-US",})
 
+validationtest = mysession.get("https://www.youtube.com/timedtext_editor?action_mde_edit_form=1&v=1iNTtHUwvq4&lang=en&bl=vmp&ui=hd&ref=player&tab=captions&o=U")
+
+assert not "accounts.google.com" in validationtest.url, "Please ensure you have correctly specified account cookies."
+assert """<button class="yt-uix-button yt-uix-button-size-default yt-uix-button-default yt-uix-button-has-icon" type="button" onclick=";return false;" id="yt-picker-language-button" data-button-action="yt.www.picker.load" data-button-menu-id="arrow-display" data-picker-key="language" data-picker-position="footer" data-button-toggle="true"><span class="yt-uix-button-icon-wrapper"><span class="yt-uix-button-icon yt-uix-button-icon-footer-language yt-sprite"></span></span><span class="yt-uix-button-content">  <span class="yt-picker-button-label">
+Language:
+  </span>
+  English
+</span><span class="yt-uix-button-arrow yt-sprite"></span></button>""" in validationtest.text, "Please make sure your YouTube and Google account language is set to English (United States)"
+
+del validationtest
+
 open("cookies.txt", "w").write("""# HTTP Cookie File
 .youtube.com	TRUE	/	FALSE	1663793455	SID	[SID]
 .youtube.com	TRUE	/	FALSE	1663793455	HSID	[HSID]
