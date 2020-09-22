@@ -142,7 +142,7 @@ while not gkiller.kill_now:
     for desit in batchcontent:
         if desit:
             if desit.split(":", 1)[0] == "video":
-                jobs.put(desit)
+                jobs.put(desit.split(":", 1)[1])
             else:
                 print("Ignoring item for now", desit)
         else:
@@ -164,9 +164,11 @@ while not gkiller.kill_now:
     print("Sending discoveries to tracker...")
     #don't send channels and playlists as those have already been converted for video IDs
     #IDK how to handle mixes so send them for now
+    print(len(recvids))
     for itemvid in recvids:
         tracker.add_item_to_tracker(tracker.ItemType.Video, itemvid)
 
+    print(len(recmixes))
     for itemmix in recvids:
         tracker.add_item_to_tracker(tracker.ItemType.MixPlaylist, itemmix)
     #open("out/discoveries.json", "w").write(dumps({"recvids": sorted(recvids), "recchans": sorted(recchans), "recmixes": sorted(recmixes), "recplayl": sorted(recplayl)}))
