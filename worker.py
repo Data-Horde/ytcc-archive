@@ -25,8 +25,26 @@ from export import subprrun
 batchcontent = []
 
 def batchfunc():
-    while len(batchcontent) < 500:
-        batchcontent.append(tracker.request_item_from_tracker())
+    ydl = YoutubeDL({"extract_flat": "in_playlist", "simulate": True, "skip_download": True, "quiet": True, "cookiefile": "cookies.txt", "source_address": "0.0.0.0", "call_home": False})
+    while len(jobs) < 501:
+        desit = tracker.request_item_from_tracker()
+        if desit:
+            if desit.split(":", 1)[0] == "video":
+                jobs.put(desit.split(":", 1)[1])
+            elif desit.split(":", 1)[0] == "channel":
+                y = ydl.extract_info("https://www.youtube.com/channel/"+desit.split(":", 1)[1], download=False)
+                for itemyv in y["entries"]:
+                    tracker.add_item_to_tracker(tracker.ItemType.Video, itemyv["id"])
+            elif desit.split(":", 1)[0] == "playlist":
+                y = ydl.extract_info("https://www.youtube.com/playlist?list="+desit.split(":", 1)[1], download=False)
+                for itemyvp in y["entries"]:
+                    tracker.add_item_to_tracker(tracker.ItemType.Video, itemyvp["id"])
+            else:
+                print("Ignoring item for now", desit)
+        else:
+            print("Ignoring item for now", desit)
+        
+        batchcontent.append(desit.split(":", 1)[1])
 
 def submitfunc(submitqueue):
     while not submitqueue.empty():
@@ -113,33 +131,6 @@ def prrun():
                 #raise
                 sleep(30)
 
-        ydl = YoutubeDL({"extract_flat": "in_playlist", "simulate": True, "skip_download": True, "quiet": True, "cookiefile": "cookies.txt", "source_address": "0.0.0.0", "call_home": False})
-        for chaninfo in set(info[3]):
-            if chaninfo not in recchans:
-                while True:
-                    try:
-                        y = ydl.extract_info("https://www.youtube.com/channel/"+chaninfo, download=False)
-                        recchans.add(chaninfo)
-                        break
-                    except:
-                        sleep(30)
-                sleep(5) #prevent error 429
-                for itemyv in y["entries"]:
-                    recvids.add(itemyv["id"])
-
-        for playlinfo in set(info[5]):
-            if playlinfo not in recplayl:
-                while True:
-                    try:
-                        y = ydl.extract_info("https://www.youtube.com/playlist?list="+playlinfo, download=False)
-                        recplayl.add(playlinfo)
-                        break
-                    except:
-                        sleep(30)
-                sleep(5) #prevent error 429
-                for itemyvp in y["entries"]:
-                    recvids.add(itemyvp["id"])
-
         # Add any discovered videos
         recvids.update(info[2])
         recchans.update(info[3])
@@ -188,14 +179,7 @@ while not gkiller.kill_now:
     #for ir in range(501):
     #    batchcontent.append(tracker.request_item_from_tracker())
 
-    for desit in batchcontent:
-        if desit:
-            if desit.split(":", 1)[0] == "video":
-                jobs.put(desit.split(":", 1)[1])
-            else:
-                print("Ignoring item for now", desit)
-        else:
-            print("Ignoring item for now", desit)
+    
 
     threads = []
 
@@ -213,22 +197,30 @@ while not gkiller.kill_now:
     print("Sending discoveries to tracker...")
 
     submitjobs = Queue()
-    #don't send channels and playlists as those have already been converted for video IDs
-    #IDK how to handle mixes so send them for now
-    print(len(recvids))
+
+    #IDK how to handle mixes so just send them for now
+    print("Videos:", len(recvids))
     for itemvid in recvids:
         submitjobs.put((tracker.ItemType.Video, itemvid))
 
-    print(len(recmixes))
+    print("Channels:", len(recchans))
+    for itemchan in recchans:
+        submitjobs.put((tracker.ItemType.Channel, itemchan))
+
+    print("Mix Playlists:", len(recmixes))
     for itemmix in recmixes:
         submitjobs.put((tracker.ItemType.MixPlaylist, itemmix))
+
+    print("Playlists:", len(recplayl))
+    for itemplayl in recplayl:
+        submitjobs.put((tracker.ItemType.Playlist, itemplayl))
 
     #open("out/discoveries.json", "w").write(dumps({"recvids": sorted(recvids), "recchans": sorted(recchans), "recmixes": sorted(recmixes), "recplayl": sorted(recplayl)}))
     #clear
     recvids.clear()
-    # recchans.clear()
+    recchans.clear()
     recmixes.clear()
-    # recplayl.clear()
+    recplayl.clear()
 
     submitthreads = []
 
