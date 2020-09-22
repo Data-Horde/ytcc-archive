@@ -114,11 +114,12 @@ def prrun():
                 sleep(30)
 
         ydl = YoutubeDL({"extract_flat": "in_playlist", "simulate": True, "skip_download": True, "quiet": True, "cookiefile": "cookies.txt", "source_address": "0.0.0.0", "call_home": False})
-        for chaninfo in info[3]:
+        for chaninfo in set(info[3]):
             if chaninfo not in recchans:
                 while True:
                     try:
                         y = ydl.extract_info("https://www.youtube.com/channel/"+chaninfo, download=False)
+                        recchans.add(chaninfo)
                         break
                     except:
                         sleep(30)
@@ -126,11 +127,12 @@ def prrun():
                 for itemyv in y["entries"]:
                     recvids.add(itemyv["id"])
 
-        for playlinfo in info[5]:
+        for playlinfo in set(info[5]):
             if playlinfo not in recplayl:
                 while True:
                     try:
                         y = ydl.extract_info("https://www.youtube.com/playlist?list="+playlinfo, download=False)
+                        recplayl.add(playlinfo)
                         break
                     except:
                         sleep(30)
