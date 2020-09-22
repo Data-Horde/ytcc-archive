@@ -1,13 +1,15 @@
 from threading import Thread
 import requests
 from time import sleep
-from os import mkdir, rmdir, listdir, environ
-from os.path import isdir, isfile
+from os import mkdir, rmdir, listdir, system, environ
+from os.path import isdir, isfile, getsize
 from json import dumps, loads
 
 import signal
 
 import tracker
+
+from youtube_dl import YoutubeDL
 
 from shutil import make_archive, rmtree
 
@@ -92,6 +94,19 @@ def prrun():
                 #raise
                 sleep(30)
 
+        ydl = YoutubeDL({"extract_flat": "in_playlist", "simulate": True, "skip_download": True, "quiet": True})
+        for chaninfo in info[3]:
+            if chaninfo not in recchans:
+                y = ydl.extract_info("https://www.youtube.com/channel/"+chaninfo, download=False)
+                for item in y["entries"]:
+                    recvids.add(item["id"])
+
+        for playlinfo in info[5]:
+            if playlinfo not in recplayl:
+                y = ydl.extract_info("https://www.youtube.com/playlist?list="+playlinfo, download=False)
+                for item in y["entries"]:
+                    recvids.add(item["id"])
+
         # Add any discovered videos
         recvids.update(info[2])
         recchans.update(info[3])
@@ -124,8 +139,7 @@ while not gkiller.kill_now:
     for ir in range(501):
         batchcontent.append(tracker.request_item_from_tracker())
 
-    while batchcontent:
-        desit = batchcontent.pop(0)
+    for desit in batchcontent:
         if desit.split(":", 1)[0] == "video":
             jobs.put(desit)
         else:
@@ -177,6 +191,15 @@ while not gkiller.kill_now:
 
     sleep(1) #wait a second to hopefully allow the other threads to finish
 
+    print("Sending discoveries to tracker...")
+    #don't send channels and playlists as those have already been converted for video IDs
+    #IDK how to handle mixes so send them for now
+    for itemvid in recvids:
+        tracker.add_item_to_tracker(tracker.ItemType.Video, itemvid)
+
+    for itemmix in recvids:
+        tracker.add_item_to_tracker(tracker.ItemType.MixPlaylist, itemmix)
+
     for fol in listdir("out"): #remove extra folders
         try:
             if isdir("out/"+fol):
@@ -189,37 +212,36 @@ while not gkiller.kill_now:
     # TODO: put the data somewhere...
     # TODO: put the discoveries somewhere...
 
-    make_archive("out", "zip", "out") #check this
+    for fol in listdir("out"):
+        if isdir("out/"+fol):
+            make_archive("out/"+fol, "zip", "out/"+fol) #check this
 
-    # while True:
-    #     try:
-    #         uploadr = requests.post("https://transfersh.com/"+str(batchinfo["batchID"])+".zip", data=open("out.zip"))
-    #         if uploadr.status_code == 200:
-    #             resulturl = uploadr.text
-    #             break
-    #     except BaseException as e:
-    #         print(e)
-    #         print("Encountered error in uploading results... retrying in 10 minutes")
-    #         sleep(600)
-
-    # Report the batch as complete (I can't think of a fail condition except for a worker exiting...)
-    # TODO: handle worker exit
-    while True:
-        params = (
-            ("id", WORKER_ID),
-            ("worker_version", WORKER_VERSION),
-            ("batchID", batchinfo["batchID"]),
-            ("randomKey", batchinfo["randomKey"]),
-            ("status", "c"),
-            #("resulturl", resulturl),
-        )
-        statusrequest = requests.get(SERVER_BASE_URL+"/worker/updateStatus", params=params)
-
-        if statusrequest.status_code == 200 and statusrequest.text == "Success":
+    targetloc = None
+    while not targetloc:
+        targetloc = tracker.request_upload_target()
+        if targetloc:
             break
         else:
-            print("Error in reporting success, will attempt again in 10 minutes")
-            sleep(600)
+            print("Waiting 5 minutes...")
+            sleep(300)
 
-    # TODO: clear the output directory
+    for zipf in listdir("out"):
+        if isfile(zipf) in zipf.endswith(".zip"):
+            if targetloc.startswith("rsync"):
+                system("rsync out/"+zipf+" "+targetloc)
+            elif targetloc.startswith("http"):
+                upzipf = open("out/"+zipf, "rb")
+                requests.post(targetloc, data=upzipf)
+                upzipf.close()
+            #upload it!
+
+    # Report the batch as complete
+    for itemb in batchcontent:
+        if isfile("out/"+itemb.split(":", 1)[1]+".zip"):
+            size = getsize("out/"+itemb.split(":", 1)[1]+".zip")
+        else:
+            size = 0
+        tracker.mark_item_as_done(itemb, size)
+
+    # clear the output directory
     rmtree("out")
