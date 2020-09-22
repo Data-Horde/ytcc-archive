@@ -127,6 +127,9 @@ def subprrun(jobs, mysession):
         if mode == "forceedit-captions":
             filestring = "_community_revised"
 
+        if 'title="The video owner already provided subtitles/CC"' in inttext:
+            filestring = "_uploader_provided"
+
         if not "forceedit" in mode:
             if '&amp;forceedit=metadata&amp;tab=metadata">See latest</a>' in inttext:
                 jobs.put((langcode, vid, "forceedit-metadata"))
