@@ -51,9 +51,6 @@ def submitfunc(submitqueue):
         itype, ival = submitqueue.get()
         tracker.add_item_to_tracker(itype, ival)
 
-WORKER_VERSION  = 1
-SERVER_BASE_URL = "http://localhost:5000"
-
 langs = ['ab', 'aa', 'af', 'sq', 'ase', 'am', 'ar', 'arc', 'hy', 'as', 'ay', 'az', 'bn', 'ba', 'eu', 'be', 'bh', 'bi', 'bs', 'br', 
     'bg', 'yue', 'yue-HK', 'ca', 'chr', 'zh-CN', 'zh-HK', 'zh-Hans', 'zh-SG', 'zh-TW', 'zh-Hant', 'cho', 'co', 'hr', 'cs', 'da', 'nl', 
     'nl-BE', 'nl-NL', 'dz', 'en', 'en-CA', 'en-IN', 'en-IE', 'en-GB', 'en-US', 'eo', 'et', 'fo', 'fj', 'fil', 'fi', 'fr', 'fr-BE', 
@@ -155,6 +152,11 @@ while not gkiller.kill_now:
 
     try:
         mkdir("out")
+    except:
+        pass
+
+    try:
+        mkdir("directory")
     except:
         pass
 
@@ -277,7 +279,7 @@ while not gkiller.kill_now:
 
     for fol in listdir("out"):
         if isdir("out/"+fol):
-            make_archive("out/"+fol, "zip", "out/"+fol) #check this
+            make_archive("directory/"+fol, "zip", "out/"+fol) #check this
 
     targetloc = None
     while not targetloc:
@@ -288,15 +290,7 @@ while not gkiller.kill_now:
             print("Waiting 5 minutes...")
             sleep(300)
 
-    for zipf in listdir("out"):
-        if isfile(zipf) in zipf.endswith(".zip"):
-            if targetloc.startswith("rsync"):
-                system("rsync out/"+zipf+" "+targetloc)
-            elif targetloc.startswith("http"):
-                upzipf = open("out/"+zipf, "rb")
-                requests.post(targetloc, data=upzipf)
-                upzipf.close()
-            #upload it!
+    system("rsync -rltv --timeout=300 --contimeout=300 --progress --bwlimit 0 --recursive --partial --partial-dir .rsync-tmp --min-size 1 --no-compress --compress-level 0 --files-from=- /directory/ "+targetloc)
 
     # Report the batch as complete
     for itemb in batchcontent:
