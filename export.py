@@ -121,7 +121,7 @@ def subprrun(jobs, mysession):
 
         filestring = ""
         if "forceedit" in mode:
-            filestring = "_community"
+            filestring = "_community_revised"
 
         if not "forceedit" in mode:
             if '&amp;forceedit=metadata&amp;tab=metadata">See latest</a>' in inttext:
