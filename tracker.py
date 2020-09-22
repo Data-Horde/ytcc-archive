@@ -16,6 +16,12 @@ BACKFEED_HOST = "blackbird-amqp.meo.ws:23038"
 BACKFEED_ENDPOINT = f"http://{BACKFEED_HOST}/{TRACKER_ID}-kj57sxhhzcn2kqjp/"
 TRACKER_ENDPOINT = f"http://{TRACKER_HOST}/{TRACKER_ID}"
 
+from os import environ
+if "TRACKER_USERNAME" in environ.keys():
+    TRACKER_USERNAME = environ["TRACKER_USERNAME"]
+else:
+    TRACKER_USERNAME = "Unnamed"
+
 
 # https://findwork.dev/blog/advanced-usage-python-requests-timeouts-retries-hooks/
 retry_strategy = Retry(
@@ -73,7 +79,7 @@ def add_item_to_tracker(item_type: ItemType, item_id: str) -> bool:
 def request_item_from_tracker() -> Optional[str]:
 
     data = {
-        "downloader": "Fusl",
+        "downloader": TRACKER_USERNAME,
         "api_version": "2",
         "version": VERSION
     }
@@ -133,7 +139,7 @@ def request_all_upload_targets() -> Optional[List[str]]:
 def mark_item_as_done(item_name: str, item_size_bytes: int) -> bool:
 
     data = {
-        "downloader": "Fusl",
+        "downloader": TRACKER_USERNAME,
         "version": VERSION,
         "item": item_name,
         "bytes": {
@@ -157,7 +163,6 @@ def mark_item_as_done(item_name: str, item_size_bytes: int) -> bool:
 
 
 # if __name__ == "__main__":
-
     # print(add_item_to_tracker(ItemType.Channel, "test10"))
     # print(request_item_from_tracker())
     # print(request_upload_target())
