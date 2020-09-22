@@ -72,6 +72,11 @@ if not (cookies["HSID"] and cookies["SSID"] and cookies["SID"]):
 
 mysession = requests.session()
 mysession.headers.update({"cookie": "HSID="+cookies["HSID"]+"; SSID="+cookies["SSID"]+"; SID="+cookies["SID"], "Accept-Language": "en-US",})
+
+open("cookies.txt", "w").write(""".youtube.com	TRUE	/	FALSE	1663793455	SID	[SID]
+.youtube.com	TRUE	/	FALSE	1663793455	HSID	[HSID]
+.youtube.com	TRUE	/	TRUE	1663793455	SSID	[SSID]""".replace("[SID]", cookies["SID"]).replace("[HSID]", cookies["HSID"]).replace("[SSID]", cookies["SSID"]))
+
 del cookies
 
 #Graceful Shutdown
@@ -107,7 +112,7 @@ def prrun():
                 #raise
                 sleep(30)
 
-        ydl = YoutubeDL({"extract_flat": "in_playlist", "simulate": True, "skip_download": True, "quiet": True})
+        ydl = YoutubeDL({"extract_flat": "in_playlist", "simulate": True, "skip_download": True, "quiet": True, "cookiefile": "cookies.txt", "source_address": "0.0.0.0", "call_home": False})
         for chaninfo in info[3]:
             if chaninfo not in recchans:
                 while True:
