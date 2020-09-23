@@ -7,8 +7,6 @@ from json import dumps, loads
 
 import signal
 
-from youtube_dl.utils import DownloadError
-
 import tracker
 
 from youtube_dl import YoutubeDL
@@ -136,7 +134,6 @@ def prrun():
             except BaseException as e:
                 print(e)
                 print("Error in retrieving information, waiting 30 seconds")
-                #raise
                 sleep(30)
 
         # Add any discovered videos
@@ -183,16 +180,11 @@ while not gkiller.kill_now:
         del batchrunthread
 
     for xc in batchthreads:
-        xc.join() #bug (occurred once: the script ended before the last thread finished)
+        xc.join()
         batchthreads.remove(xc)
         del xc
 
-
-
-    #for ir in range(501):
-    #    batchcontent.append(tracker.request_item_from_tracker())
-
-    
+    sleep(1) # prevent the script from continuing before the last thread finishes
 
     threads = []
 
@@ -211,7 +203,7 @@ while not gkiller.kill_now:
 
     submitjobs = Queue()
 
-    #IDK how to handle mixes so just send them for now
+    # IDK how to handle mixes so just send them for now
     print("Videos:", len(recvids))
     for itemvid in recvids:
         submitjobs.put((tracker.ItemType.Video, itemvid))
@@ -228,8 +220,9 @@ while not gkiller.kill_now:
     for itemplayl in recplayl:
         submitjobs.put((tracker.ItemType.Playlist, itemplayl))
 
-    #open("out/discoveries.json", "w").write(dumps({"recvids": sorted(recvids), "recchans": sorted(recchans), "recmixes": sorted(recmixes), "recplayl": sorted(recplayl)}))
-    #clear
+    # open("out/discoveries.json", "w").write(dumps({"recvids": sorted(recvids), "recchans": sorted(recchans), "recmixes": sorted(recmixes), "recplayl": sorted(recplayl)}))
+    
+    # clear lists
     recvids.clear()
     recchans.clear()
     recmixes.clear()
@@ -244,11 +237,11 @@ while not gkiller.kill_now:
         del submitrunthread
 
     for xb in submitthreads:
-        xb.join() #bug (occurred once: the script ended before the last thread finished)
+        xb.join()
         submitthreads.remove(xb)
         del xb
 
-    sleep(1)
+    sleep(1) # prevent the script from continuing before the last thread finishes
 
 
     subtjobs = Queue()
@@ -270,13 +263,13 @@ while not gkiller.kill_now:
         del subrunthread
 
     for xa in subthreads:
-        xa.join() #bug (occurred once: the script ended before the last thread finished)
+        xa.join()
         subthreads.remove(xa)
         del xa
 
-    sleep(1) #wait a second to hopefully allow the other threads to finish
+    sleep(1) # wait a second to hopefully allow the other threads to finish
 
-    for fol in listdir("out"): #remove extra folders
+    for fol in listdir("out"): #remove empty folders
         try:
             if isdir("out/"+fol):
                 rmdir("out/"+fol)
@@ -285,12 +278,10 @@ while not gkiller.kill_now:
 
     #https://stackoverflow.com/a/11968881
 
-    # TODO: put the data somewhere...
-    # TODO: put the discoveries somewhere...
 
     for fol in listdir("out"):
         if isdir("out/"+fol):
-            make_archive("directory/"+fol, "zip", "out/"+fol) #check this
+            make_archive("directory/"+fol, "zip", "out/"+fol)
 
     targetloc = None
     while not targetloc:
@@ -316,6 +307,6 @@ while not gkiller.kill_now:
             size = 0
         tracker.mark_item_as_done(itemb, size)
 
-    # clear the output directory
+    # clear the output directories
     rmtree("out")
     rmtree("directory")
