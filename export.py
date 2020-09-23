@@ -33,6 +33,8 @@ from gc import collect
 
 import requests
 
+from time import sleep
+
 # https://docs.python.org/3/library/html.parser.html
 from html.parser import HTMLParser
 
@@ -84,43 +86,48 @@ def subprrun(jobs, mysession):
         vid = vid.strip()
         print(langcode, vid)
 
-        if mode == "default":
-            pparams = (
-                ("v", vid),
-                ("lang", langcode),
-                ("action_mde_edit_form", 1),
-                ("bl", "vmp"),
-                ("ui", "hd"),
-                ("tab", "captions"),
-                ("o", "U")
-            )
+        while True:
+            if mode == "default":
+                pparams = (
+                    ("v", vid),
+                    ("lang", langcode),
+                    ("action_mde_edit_form", 1),
+                    ("bl", "vmp"),
+                    ("ui", "hd"),
+                    ("tab", "captions"),
+                    ("o", "U")
+                )
 
-            page = mysession.get("https://www.youtube.com/timedtext_editor", params=pparams)
-        elif mode == "forceedit-metadata":
-            pparams = (
-                ("v", vid),
-                ("lang", langcode),
-                ("action_mde_edit_form", 1),
-                ('forceedit', 'metadata'),
-                ('tab', 'metadata')
-            )
+                page = mysession.get("https://www.youtube.com/timedtext_editor", params=pparams)
+            elif mode == "forceedit-metadata":
+                pparams = (
+                    ("v", vid),
+                    ("lang", langcode),
+                    ("action_mde_edit_form", 1),
+                    ('forceedit', 'metadata'),
+                    ('tab', 'metadata')
+                )
 
-            page = mysession.get("https://www.youtube.com/timedtext_editor", params=pparams)
-        elif mode == "forceedit-captions":
-            pparams = (
-                ("v", vid),
-                ("lang", langcode),
-                ("action_mde_edit_form", 1),
-                ("bl", "vmp"),
-                ("ui", "hd"),
-                ('forceedit', 'captions'),
-                ("tab", "captions"),
-                ("o", "U")
-            )
+                page = mysession.get("https://www.youtube.com/timedtext_editor", params=pparams)
+            elif mode == "forceedit-captions":
+                pparams = (
+                    ("v", vid),
+                    ("lang", langcode),
+                    ("action_mde_edit_form", 1),
+                    ("bl", "vmp"),
+                    ("ui", "hd"),
+                    ('forceedit', 'captions'),
+                    ("tab", "captions"),
+                    ("o", "U")
+                )
 
-            page = mysession.get("https://www.youtube.com/timedtext_editor", params=pparams)
+                page = mysession.get("https://www.youtube.com/timedtext_editor", params=pparams)
 
-        assert not "accounts.google.com" in page.url, "Please supply authentication cookie information in config.json or environment variables. See README.md for more information."
+            if not "accounts.google.com" in page.url:
+                break
+            else:
+                print("[Retrying in 30 seconds] Please supply authentication cookie information in config.json or environment variables. See README.md for more information.")
+                sleep(30)
 
         inttext = page.text
 
