@@ -267,7 +267,7 @@ while not gkiller.kill_now:
         subthreads.remove(xa)
         del xa
 
-    sleep(1) # wait a second to hopefully allow the other threads to finish
+    sleep(30) # wait 30 seconds to hopefully allow the other threads to finish
 
     for fol in listdir("out"): #remove empty folders
         try:
