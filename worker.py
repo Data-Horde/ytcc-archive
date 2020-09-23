@@ -22,9 +22,19 @@ from export import subprrun
 
 batchcontent = []
 
+HEROKU = False
+if isfile("../Procfile"):
+    HEROKU = True
+
 def batchfunc():
     ydl = YoutubeDL({"extract_flat": "in_playlist", "simulate": True, "skip_download": True, "quiet": True, "cookiefile": "cookies.txt", "source_address": "0.0.0.0", "call_home": False})
-    while jobs.qsize() < 251:
+    
+    if not HEROKU:
+        desqsize = 51
+    elif HEROKU:
+        desqsize = 251
+    
+    while jobs.qsize() < desqsize:
         desit = tracker.request_item_from_tracker()
         if desit:
             if desit.split(":", 1)[0] == "video":
