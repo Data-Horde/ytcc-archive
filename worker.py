@@ -21,6 +21,7 @@ from discovery import getmetadata
 from export import subprrun
 
 batchcontent = []
+actualitems = []
 
 HEROKU = False
 if isfile("../Procfile"):
@@ -53,6 +54,7 @@ def batchfunc():
             print("Ignoring item for now", desit)
         
         batchcontent.append(desit.split(":", 1)[1])
+        actualitems.append(desit)
 
 def submitfunc(submitqueue):
     while not submitqueue.empty():
@@ -179,6 +181,7 @@ while not gkiller.kill_now:
         pass
 
     batchcontent.clear()
+    actualitems.clear()
 
     # Get a batch ID
     batchthreads = []
@@ -310,11 +313,12 @@ while not gkiller.kill_now:
                 system("curl -F "+filzip+"=@directory/"+filzip+" "+targetloc)
 
     # Report the batch as complete
-    for itemb in batchcontent:
-        if isfile("directory/"+itemb.split(":", 1)[1]+".zip"):
-            size = getsize("directory/"+itemb.split(":", 1)[1]+".zip")
-        else:
-            size = 0
+    for itemb in actualitems:
+        size = 0
+        if ":" in itemb:
+            if itemb.split(":", 1)[0] == "video":
+                if isfile("directory/"+itemb.split(":", 1)[1]+".zip"):
+                    size = getsize("directory/"+itemb.split(":", 1)[1]+".zip")
         tracker.mark_item_as_done(itemb, size)
 
     # clear the output directories
