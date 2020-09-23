@@ -129,7 +129,7 @@ def prrun():
         print("Video ID:", str(item).strip())
         while True:
             try:
-                info = getmetadata(str(item).strip())
+                info = getmetadata(mysession, str(item).strip())
                 break
             except BaseException as e:
                 print(e)
