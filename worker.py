@@ -297,7 +297,7 @@ while not gkiller.kill_now:
     elif targetloc.startswith("http"):
         for filzip in listdir("directory"):
             if filzip.endswith(".zip"):
-                system("curl --data-binary @directory/"+filzip+" "+targetloc)
+                system("curl -F "+filzip+"=@directory/"+filzip+" "+targetloc)
 
     # Report the batch as complete
     for itemb in batchcontent:
