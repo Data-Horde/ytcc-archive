@@ -69,10 +69,10 @@ def add_item_to_tracker(item_type: ItemType, item_id: str) -> bool:
     code = req.status_code
 
     if code == 200:
-        print(f"[INFO] Item ID \'{item_name}\' added to tracker successfully")
+        # print(f"[INFO] Item ID \'{item_name}\' added to tracker successfully")
         return True
     elif code == 409:
-        print(f"[INFO] Item ID \'{item_name}\' has already been added to tracker")
+        # print(f"[INFO] Item ID \'{item_name}\' has already been added to tracker")
         return True
     elif code == 404:
         print(f"[ERROR] Unable to add item ID \'{item_name}\' to tracker. Project backfeed channel not found: {BACKFEED_ENDPOINT}")
