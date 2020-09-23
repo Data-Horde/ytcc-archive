@@ -5,6 +5,9 @@ import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 
+from os.path import isfile
+from json import loads
+
 # https://github.com/ArchiveTeam/tencent-weibo-grab/blob/9bae5f9747e014db9227821a9c11557267967023/pipeline.py
 VERSION = "20200921.01"
 
@@ -19,6 +22,11 @@ TRACKER_ENDPOINT = f"http://{TRACKER_HOST}/{TRACKER_ID}"
 from os import environ
 if "TRACKER_USERNAME" in environ.keys():
     TRACKER_USERNAME = environ["TRACKER_USERNAME"]
+elif isfile("config.json"):
+    try:
+        TRACKER_USERNAME = loads(open("config.json").read())["TRACKER_USERNAME"]
+    except:
+        TRACKER_USERNAME = "Unnamed"
 else:
     TRACKER_USERNAME = "Unnamed"
 
