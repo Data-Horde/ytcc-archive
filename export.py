@@ -67,8 +67,6 @@ class MyHTMLParser(HTMLParser):
             self.title = self.get_attr(attrs, "value")
         elif tag == "textarea" and self.check_attr(attrs, "id", "metadata-description"):
             self.initdescription = self.get_attr(attrs, "data-original-description")
-        elif tag == "input" and self.check_attr(attrs, "id", "metadata-title"):
-            self.inittitle = self.get_attr(attrs, "data-original-title")
 
     def handle_data(self, data):
         if self.get_starttag_text() and self.get_starttag_text().startswith("<textarea "):
@@ -76,6 +74,8 @@ class MyHTMLParser(HTMLParser):
                 self.captions[len(self.captions)-1]["text"] += data
             elif 'id="metadata-description"' in self.get_starttag_text():
                 self.description += data
+        elif self.get_starttag_text() and self.get_starttag_text().startswith('<div id="original-video-title"'):
+            self.inittitle += data
 
 def subprrun(jobs, mysession):
     while not jobs.empty():
@@ -192,9 +192,9 @@ def subprrun(jobs, mysession):
                 open("out/"+vid+"/"+vid+"_"+langcode+filestring+".json", "w", encoding="utf-8").write(dumps(metadata))
                 del metadata
 
-            if (parser.inittitle or parser.initdescription) and (mode == "default" or mode == "forceedit-metadata" and initlang):
+            if (parser.inittitle[9:-17] or parser.initdescription) and (mode == "default" or mode == "forceedit-metadata" and initlang):
                 metadata = {}
-                metadata["title"] = parser.inittitle
+                metadata["title"] = parser.inittitle[9:-17]
                 if metadata["title"] == False:
                     metadata["title"] = ""
                 metadata["description"] = parser.initdescription
