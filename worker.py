@@ -24,7 +24,7 @@ batchcontent = []
 
 def batchfunc():
     ydl = YoutubeDL({"extract_flat": "in_playlist", "simulate": True, "skip_download": True, "quiet": True, "cookiefile": "cookies.txt", "source_address": "0.0.0.0", "call_home": False})
-    while jobs.qsize() < 501:
+    while jobs.qsize() < 251:
         desit = tracker.request_item_from_tracker()
         if desit:
             if desit.split(":", 1)[0] == "video":
