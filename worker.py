@@ -193,7 +193,7 @@ def threadrunner(jobs: Queue):
                                         sleep(300)
 
                                 if targetloc.startswith("rsync"):
-                                    system("rsync -rltv --timeout=300 --contimeout=300 --progress --bwlimit 0 --recursive --partial --partial-dir .rsync-tmp --min-size 1 --no-compress --compress-level 0 --files-from=- directory/"+args.split(":", 1)[1]+"/ "+targetloc)
+                                    system("rsync -rltv --timeout=300 --contimeout=300 --progress --bwlimit 0 --recursive --partial --partial-dir .rsync-tmp --min-size 1 --no-compress --compress-level 0 directory/"+args.split(":", 1)[1]+"/ "+targetloc)
                                 elif targetloc.startswith("http"):
                                     system("curl -F "+args.split(":", 1)[1]+".zip=@directory/"+args.split(":", 1)[1]+"/"+args.split(":", 1)[1]+".zip "+targetloc)
 
