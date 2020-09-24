@@ -13,7 +13,7 @@ def getmetadata(mysession, vid):
         wpage = mysession.get("https://www.youtube.com/watch", params=params)
         if not """</div><div id="content" class="  content-alignment" role="main"><p class='largeText'>Sorry for the interruption. We have been receiving a large volume of requests from your network.</p>
 
-<p>To continue with your YouTube experience, please fill out the form below.</p>""" in wpage.text and not wpage.status_code == 429:
+<p>To continue with your YouTube experience, please fill out the form below.</p>""" in wpage.text and not wpage.status_code == 429 and 'window["ytInitialPlayerResponse"] = ' in wpage.text and 'window["ytInitialData"] = ' in wpage.text:
             break
         else:
             print("Captcha detected, waiting 30 seconds")
