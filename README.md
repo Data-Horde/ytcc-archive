@@ -9,13 +9,13 @@ Ensure that `python` 3.8.5, `zip`, `curl`, and `rsync` are installed on your sys
 After completing the above setup steps, simply run `python3 worker.py`.
 
 ### Heroku
-A wrapper repo for free and easy deployment and environment configuration, as well automatic updates every 24-27.6 hours is available. Deploy up to 5 instances of it to a free Heroku account (total max runtime 550 hours) with no need for credit card verification by clicking the button below.
+A wrapper repo for free and easy deployment and environment configuration, as well automatic updates every 24-27.6 hours is available. Deploy up to 5 instances of it to a free Heroku account (total max monthly runtime 550 hours) with no need for credit card verification by clicking the button below.
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/Data-Horde/ytcc-archive-heroku)
 
 ## Bonus Features
 ### Export Captions and Titles/Descriptions Manually
-Simply run `python3 ytcc-exporter.py` followed by a list of space-separated YouTube video IDs, and all community-contributed captioning and titles/descriptions in all languages will be exported.
+Simply run `python3 exporter.py` followed by a list of space-separated YouTube video IDs, and all community-contributed captioning and titles/descriptions in all languages will be exported.
 
 ### Discover Videos Manually
 Simply run `python3 discovery.py` followed by a list of space-separated YouTube video IDs and a list of discovered video, channel and playlist IDs will be printed, as well as whether caption contributions are enabled.
