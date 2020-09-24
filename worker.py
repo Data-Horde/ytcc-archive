@@ -27,7 +27,7 @@ jobs = Queue()
 
 langcnt = {}
 
-lasttask = datetime.min()
+lasttask = datetime.min
 
 try:
     mkdir("out")
