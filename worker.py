@@ -158,24 +158,22 @@ def threadrunner(jobs: Queue):
                 while True:
                     try:
                         y = ydl.extract_info("https://www.youtube.com/channel/"+desit.split(":", 1)[1], download=False)
+                        for itemyv in y["entries"]:
+                            jobs.put(("submitdiscovery", itemyv["id"], tracker.ItemType.Video))
+                        jobs.put(("complete", None, "channel:"+args))
                         break
                     except:
-                        print("YouTube-DL error, waiting 30 seconds...")
-                        sleep(30)
-                for itemyv in y["entries"]:
-                    jobs.put(("submitdiscovery", itemyv["id"], tracker.ItemType.Video))
-                jobs.put(("complete", None, "channel:"+args))
+                        print("YouTube-DL error, ignoring but not marking as complete...")
             elif task == "playlist":
                 while True:
                     try:
                         y = ydl.extract_info("https://www.youtube.com/playlist?list="+desit.split(":", 1)[1], download=False)
+                        for itemyvp in y["entries"]:
+                            jobs.put(("submitdiscovery", itemyvp["id"], tracker.ItemType.Video))
+                        jobs.put(("complete", None, "playlist:"+args))
                         break
                     except:
-                        print("YouTube-DL error, waiting 30 seconds...")
-                        sleep(30)
-                for itemyvp in y["entries"]:
-                    jobs.put(("submitdiscovery", itemyvp["id"], tracker.ItemType.Video))
-                jobs.put(("complete", None, "playlist:"+args))
+                        print("YouTube-DL error, ignoring but not marking as complete...")
             elif task == "complete":
                 size = 0
                 if ":" in args:
