@@ -87,6 +87,8 @@ class GracefulKiller:
 
 gkiller = GracefulKiller()
 
+#TODO: discoveries, zipping, completion of subtitles
+
 #minitasks
 def threadrunner(jobs: Queue):
     global langcnt
@@ -98,9 +100,35 @@ def threadrunner(jobs: Queue):
             if task == "submitdiscovery":
                 tracker.add_item_to_tracker(args, vid)
             elif task == "discovery":
-                pass
+                while True:
+                    try:
+                        info = getmetadata(mysession, str(vid).strip())
+                        break
+                    except BaseException as e:
+                        print(e)
+                        print("Error in retrieving information, waiting 30 seconds")
+                        sleep(30)
+                if info[0] or info[1]: # ccenabled or creditdata
+                    if not isdir("out/"+str(vid).strip()):
+                        mkdir("out/"+str(vid).strip())
+                if info[1]:
+                    open("out/"+str(vid).strip()+"/"+str(vid).strip()+"_published_credits.json", "w").write(dumps(info[1]))
+
+                if info[0]:
+                    langcnt[vid] = 0
+                    for langcode in langs:
+                        jobs.put(("subtitles", vid, langcode))
+                else:
+                    jobs.put(("complete", None, "video:"+vid))
             elif task == "subtitles":
-                pass
+                subprrun(jobs, mysession, args, vid, "default")
+                langcnt[vid] += 1
+                if langcnt[vid] >= 195:
+                    pass #complete(?)
+            elif task == "subtitles-forceedit-captions":
+                subprrun(jobs, mysession, args, vid, "forceedit-captions")
+            elif task == "subtitles-forceedit-metadata":
+                subprrun(jobs, mysession, args, vid, "forceedit-metadata")
             elif task == "channel":
                 y = ydl.extract_info("https://www.youtube.com/channel/"+desit.split(":", 1)[1], download=False)
                 for itemyv in y["entries"]:
@@ -185,24 +213,13 @@ def prrun():
         item = jobs.get()
 
         print("Video ID:", str(item).strip())
-        while True:
-            try:
-                info = getmetadata(mysession, str(item).strip())
-                break
-            except BaseException as e:
-                print(e)
-                print("Error in retrieving information, waiting 30 seconds")
-                sleep(30)
+        
 
         # Add any discovered videos
         recvids.update(info[2])
         recchans.update(info[3])
         recmixes.update(info[4])
         recplayl.update(info[5])
-
-        if info[0] or info[1]: # ccenabled or creditdata
-            if not isdir("out/"+str(item).strip()):
-                mkdir("out/"+str(item).strip())
 
         if info[1]: # creditdata
             open("out/"+str(item).strip()+"/"+str(item).strip()+"_published_credits.json", "w").write(dumps(info[1]))
