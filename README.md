@@ -21,3 +21,9 @@ Simply run `python3 exporter.py` followed by a list of space-separated YouTube v
 
 ### Discover Videos Manually
 Simply run `python3 discovery.py` followed by a list of space-separated YouTube video IDs and a list of discovered video, channel and playlist IDs will be printed, as well as whether caption contributions are enabled.
+
+# Stats
+See how much has been archived so far.
+
+* https://atdash.meo.ws/d/attv2/archive-team-tracker-charts-v2?orgId=1&var-project=ext-yt-communitycontribs 
+* https://tracker.archiveteam.org/ext-yt-communitycontribs/
