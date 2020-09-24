@@ -94,7 +94,7 @@ class GracefulKiller:
         signal.signal(signal.SIGTERM, self.exit_gracefully)
 
     def exit_gracefully(self, signum, frame):
-        print("Graceful exit process initiated, stopping all tasks...")
+        print("Graceful exit process initiated, no longer accepting new tasks but finishing existing ones...")
         self.kill_now = True
 
 gkiller = GracefulKiller()
@@ -102,9 +102,8 @@ gkiller = GracefulKiller()
 #microtasks
 def threadrunner(jobs: Queue):
     global langcnt
-    global lasttask
     ydl = YoutubeDL({"extract_flat": "in_playlist", "simulate": True, "skip_download": True, "quiet": True, "cookiefile": "cookies.txt", "source_address": "0.0.0.0", "call_home": False})
-    while not gkiller.kill_now:
+    while True:
         if not jobs.empty():
             task, vid, args = jobs.get()
 
@@ -151,25 +150,21 @@ def threadrunner(jobs: Queue):
             elif task == "subtitles-forceedit-metadata":
                 subprrun(jobs, mysession, args, vid, "forceedit-metadata")
             elif task == "channel":
-                while True:
-                    try:
-                        y = ydl.extract_info("https://www.youtube.com/channel/"+desit.split(":", 1)[1], download=False)
-                        for itemyv in y["entries"]:
-                            jobs.put(("submitdiscovery", itemyv["id"], tracker.ItemType.Video))
-                        jobs.put(("complete", None, "channel:"+args))
-                        break
-                    except:
-                        print("YouTube-DL error, ignoring but not marking as complete...", "https://www.youtube.com/channel/"+desit.split(":", 1)[1])
+                try:
+                    y = ydl.extract_info("https://www.youtube.com/channel/"+desit.split(":", 1)[1], download=False)
+                    for itemyv in y["entries"]:
+                        jobs.put(("submitdiscovery", itemyv["id"], tracker.ItemType.Video))
+                    jobs.put(("complete", None, "channel:"+args))
+                except:
+                    print("YouTube-DL error, ignoring but not marking as complete...", "https://www.youtube.com/channel/"+desit.split(":", 1)[1])
             elif task == "playlist":
-                while True:
-                    try:
-                        y = ydl.extract_info("https://www.youtube.com/playlist?list="+desit.split(":", 1)[1], download=False)
-                        for itemyvp in y["entries"]:
-                            jobs.put(("submitdiscovery", itemyvp["id"], tracker.ItemType.Video))
-                        jobs.put(("complete", None, "playlist:"+args))
-                        break
-                    except:
-                        print("YouTube-DL error, ignoring but not marking as complete...", "https://www.youtube.com/playlist?list="+desit.split(":", 1)[1])
+                try:
+                    y = ydl.extract_info("https://www.youtube.com/playlist?list="+desit.split(":", 1)[1], download=False)
+                    for itemyvp in y["entries"]:
+                        jobs.put(("submitdiscovery", itemyvp["id"], tracker.ItemType.Video))
+                    jobs.put(("complete", None, "playlist:"+args))
+                except:
+                    print("YouTube-DL error, ignoring but not marking as complete...", "https://www.youtube.com/playlist?list="+desit.split(":", 1)[1])
             elif task == "complete":
                 size = 0
                 if ":" in args:
@@ -216,21 +211,24 @@ def threadrunner(jobs: Queue):
                 tracker.mark_item_as_done(args, size)
             jobs.task_done()
         else:
-            # get a new task from tracker
-            collect() #cleanup
-            desit = tracker.request_item_from_tracker()
-            print("New task:", desit)
-            if desit:
-                if desit.split(":", 1)[0] == "video":
-                    jobs.put(("discovery", desit.split(":", 1)[1], None))
-                elif desit.split(":", 1)[0] == "channel":
-                    jobs.put(("channel", None, desit.split(":", 1)[1]))
-                elif desit.split(":", 1)[0] == "playlist":
-                    jobs.put(("playlist", None, desit.split(":", 1)[1]))
+            if not gkiller.kill_now:
+                # get a new task from tracker
+                collect() #cleanup
+                desit = tracker.request_item_from_tracker()
+                print("New task:", desit)
+                if desit:
+                    if desit.split(":", 1)[0] == "video":
+                        jobs.put(("discovery", desit.split(":", 1)[1], None))
+                    elif desit.split(":", 1)[0] == "channel":
+                        jobs.put(("channel", None, desit.split(":", 1)[1]))
+                    elif desit.split(":", 1)[0] == "playlist":
+                        jobs.put(("playlist", None, desit.split(":", 1)[1]))
+                    else:
+                        print("Ignoring item for now", desit)
                 else:
                     print("Ignoring item for now", desit)
             else:
-                print("Ignoring item for now", desit)
+                break
     
 
 threads = []
