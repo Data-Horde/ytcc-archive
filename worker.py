@@ -177,7 +177,7 @@ def threadrunner(jobs: Queue):
 
                                 while not isfile("directory/"+args.split(":", 1)[1]+"/"+args.split(":", 1)[1]+".zip"):
                                     print("Attempting to zip item...")
-                                    system("zip -9 -r directory/"+args.split(":", 1)[1]+"/"+args.split(":", 1)[1]+".zip out/"+args.split(":", 1)[1])
+                                    system("zip -9 -r directory/"+args.split(":", 1)[1]+"/"+args.split(":", 1)[1]+".zip out/"+args.split(":", 1)[1]+"/*")
 
                                 #get a target
                                 targetloc = None
