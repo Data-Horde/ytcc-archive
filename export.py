@@ -31,7 +31,7 @@ from json import dumps
 
 from gc import collect
 
-import requests
+# import requests
 
 from time import sleep
 
@@ -81,6 +81,11 @@ class MyHTMLParser(HTMLParser):
 
 def subprrun(jobs, mysession, langcode, vid, mode):
     collect() #cleanup memory
+
+    if not "forceedit" in mode:
+        retval = 3
+    else:
+        retval = 1
     vid = vid.strip()
     print(langcode, vid)
 
@@ -150,9 +155,11 @@ def subprrun(jobs, mysession, langcode, vid, mode):
     if not "forceedit" in mode:
         if '&amp;forceedit=metadata&amp;tab=metadata">See latest</a>' in inttext:
             jobs.put(("subtitles-forceedit-metadata", vid, langcode))
+            retval -= 1
 
         if '<li id="captions-editor-nav-captions" role="tab" data-state="published" class="published">' in inttext:
             jobs.put(("subtitles-forceedit-captions", vid, langcode))
+            retval -= 1
 
     if 'id="reject-captions-button"' in inttext or 'id="reject-metadata-button"' in inttext or 'data-state="published"' in inttext or 'title="The video owner already provided subtitles/CC"' in inttext: #quick way of checking if this page is worth parsing
         parser = MyHTMLParser()
@@ -214,7 +221,7 @@ def subprrun(jobs, mysession, langcode, vid, mode):
     del vid
     del pparams
 
-    return True
+    return retval
 
 # if __name__ == "__main__":
 #     from os import environ, mkdir
