@@ -15,9 +15,22 @@ A wrapper repo for free and easy deployment and environment configuration, as we
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/Data-Horde/ytcc-archive-heroku)
 
+### Docker image
+
+Stable Docker Image:
+`docker pull fusl/ytcc-archive`
+
+You can also make a new image using the Dockerfile provided in this repo.
+
 ## Bonus Features
 ### Export Captions and Titles/Descriptions Manually
 Simply run `python3 exporter.py` followed by a list of space-separated YouTube video IDs, and all community-contributed captioning and titles/descriptions in all languages will be exported.
 
 ### Discover Videos Manually
 Simply run `python3 discovery.py` followed by a list of space-separated YouTube video IDs and a list of discovered video, channel and playlist IDs will be printed, as well as whether caption contributions are enabled.
+
+# Stats
+See how much has been archived so far.
+
+* https://atdash.meo.ws/d/attv2/archive-team-tracker-charts-v2?orgId=1&var-project=ext-yt-communitycontribs 
+* https://tracker.archiveteam.org/ext-yt-communitycontribs/
