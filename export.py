@@ -79,13 +79,25 @@ class MyHTMLParser(HTMLParser):
         elif self.get_starttag_text() and self.get_starttag_text().startswith('<div id="original-video-title"'):
             self.inittitle += data
 
-def subprrun(jobs, mysession, langcode, vid, mode):
+def subprrun(mysession, langcode, vid, mode, needforcemetadata, needforcecaptions):
+    if mode == "forceedit-metadata":
+        while needforcemetadata[langcode] == None: #extra logic
+            print("Awaiting forcemetadata")
+            sleep(1)
+        if needforcemetadata[langcode] == False:
+            #print("forcemetadata not needed")
+            return True #nothing needs to be done, otherwise, continue
+
+    if mode == "forceedit-captions":
+        while needforcecaptions[langcode] == None: #extra logic
+            print("Awaiting forcecaptions")
+            sleep(1)
+        if needforcecaptions[langcode] == False:
+            #print("forcecaptions not needed")
+            return True #nothing needs to be done, otherwise, continue
+
     collect() #cleanup memory
 
-    if not "forceedit" in mode:
-        retval = 3
-    else:
-        retval = 1
     vid = vid.strip()
     print(langcode, vid)
 
@@ -158,12 +170,16 @@ def subprrun(jobs, mysession, langcode, vid, mode):
 
     if not "forceedit" in mode:
         if '&amp;forceedit=metadata&amp;tab=metadata">See latest</a>' in inttext:
-            jobs.put(("subtitles-forceedit-metadata", vid, langcode))
-            retval -= 1
+            print("Need forcemetadata")
+            needforcemetadata[langcode] = True
+        else:
+            needforcemetadata[langcode] = False
 
         if '<li id="captions-editor-nav-captions" role="tab" data-state="published" class="published">' in inttext:
-            jobs.put(("subtitles-forceedit-captions", vid, langcode))
-            retval -= 1
+            print("Need forcecaptions")
+            needforcecaptions[langcode] = True
+        else:
+            needforcecaptions[langcode] = False
 
     if 'id="reject-captions-button"' in inttext or 'id="reject-metadata-button"' in inttext or 'data-state="published"' in inttext or 'title="The video owner already provided subtitles/CC"' in inttext: #quick way of checking if this page is worth parsing
         parser = MyHTMLParser()
@@ -225,7 +241,7 @@ def subprrun(jobs, mysession, langcode, vid, mode):
     del vid
     del pparams
 
-    return retval
+    return True
 
 # if __name__ == "__main__":
 #     from os import environ, mkdir

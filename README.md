@@ -8,8 +8,6 @@ Ensure that `python` 3.8.5, `zip`, `curl`, and `rsync` are installed on your sys
 ### Archiving Worker:
 After completing the above setup steps, simply run `python3 worker.py`.
 
-Note: there may be a problem with `rsync` and running the script on WSL... please alert me if rsync stalls on WSL for you too.
-
 ### Heroku
 A wrapper repo for free and easy deployment and environment configuration, as well automatic updates every 24-27.6 hours is available. Deploy up to 5 instances of it to a free Heroku account (total max monthly runtime 550 hours) with no need for credit card verification by clicking the button below.
 

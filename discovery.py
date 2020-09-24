@@ -13,7 +13,7 @@ def getmetadata(mysession, vid):
         wpage = mysession.get("https://www.youtube.com/watch", params=params)
         if not """</div><div id="content" class="  content-alignment" role="main"><p class='largeText'>Sorry for the interruption. We have been receiving a large volume of requests from your network.</p>
 
-<p>To continue with your YouTube experience, please fill out the form below.</p>""" in wpage.text:
+<p>To continue with your YouTube experience, please fill out the form below.</p>""" in wpage.text and not wpage.status_code == 429:
             break
         else:
             print("Captcha detected, waiting 30 seconds")
@@ -74,35 +74,37 @@ def getmetadata(mysession, vid):
             initdata = loads(line.split('window["ytInitialData"] = ', 1)[1].strip()[:-1])
             if "contents" in initdata.keys(): #prevent exception
                 try:
-                    for recmd in initdata["contents"]["twoColumnWatchNextResults"]["secondaryResults"]["secondaryResults"]["results"]:
-                        #auto is like the others
-                        if "compactAutoplayRenderer" in recmd.keys():
-                            recmd = recmd["compactAutoplayRenderer"]["contents"][0]
+                    if "results" in initdata["contents"]["twoColumnWatchNextResults"]["secondaryResults"]["secondaryResults"].keys():
+                        for recmd in initdata["contents"]["twoColumnWatchNextResults"]["secondaryResults"]["secondaryResults"]["results"]:
+                            #auto is like the others
+                            if "compactAutoplayRenderer" in recmd.keys():
+                                recmd = recmd["compactAutoplayRenderer"]["contents"][0]
 
-                        if "compactVideoRenderer" in recmd.keys():
-                            recvids.add(recmd["compactVideoRenderer"]["videoId"])
-                            try:
-                                recchans.add(recmd["compactVideoRenderer"]["channelId"])
-                            except KeyError as e:
+                            if "compactVideoRenderer" in recmd.keys():
+                                recvids.add(recmd["compactVideoRenderer"]["videoId"])
                                 try:
-                                    recchans.add(recmd["compactVideoRenderer"]["longBylineText"]["runs"][0]["navigationEndpoint"]["browseEndpoint"]["browseId"])
+                                    recchans.add(recmd["compactVideoRenderer"]["channelId"])
                                 except KeyError as e:
-                                    print("Channel extract error")
-                                #raise
-                                #print("Unable to extract channel:")
-                                #print(recmd["compactVideoRenderer"])
+                                    try:
+                                        recchans.add(recmd["compactVideoRenderer"]["longBylineText"]["runs"][0]["navigationEndpoint"]["browseEndpoint"]["browseId"])
+                                    except KeyError as e:
+                                        print("Channel extract error")
+                                    #raise
+                                    #print("Unable to extract channel:")
+                                    #print(recmd["compactVideoRenderer"])
 
-                        elif "compactPlaylistRenderer" in recmd.keys():
-                            recplayl.add(recmd["compactPlaylistRenderer"]["playlistId"])
-                            if "navigationEndpoint" in recmd["compactPlaylistRenderer"].keys():
-                                recvids.add(recmd["compactPlaylistRenderer"]["navigationEndpoint"]["watchEndpoint"]["videoId"])
-                            if "navigationEndpoint" in recmd["compactPlaylistRenderer"]["shortBylineText"].keys():
-                                recchans.add(recmd["compactPlaylistRenderer"]["shortBylineText"]["navigationEndpoint"]["browseEndpoint"]["browseId"])
+                            elif "compactPlaylistRenderer" in recmd.keys():
+                                recplayl.add(recmd["compactPlaylistRenderer"]["playlistId"])
+                                if "navigationEndpoint" in recmd["compactPlaylistRenderer"].keys():
+                                    recvids.add(recmd["compactPlaylistRenderer"]["navigationEndpoint"]["watchEndpoint"]["videoId"])
+                                if "navigationEndpoint" in recmd["compactPlaylistRenderer"]["shortBylineText"].keys():
+                                    recchans.add(recmd["compactPlaylistRenderer"]["shortBylineText"]["navigationEndpoint"]["browseEndpoint"]["browseId"])
 
-                        elif "compactRadioRenderer" in recmd.keys(): #mix playlist
-                            recmixes.add(recmd["compactRadioRenderer"]["playlistId"])
-                        # todo: find out if channels can be suggested
-                except:
+                            elif "compactRadioRenderer" in recmd.keys(): #mix playlist
+                                recmixes.add(recmd["compactRadioRenderer"]["playlistId"])
+                            # todo: find out if channels can be suggested
+                except BaseException as e:
+                    print(e)
                     print("Exception in discovery, continuing anyway")
 
             creditdata = {}

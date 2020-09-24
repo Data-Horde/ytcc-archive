@@ -23,8 +23,6 @@ from export import subprrun
 #useful Queue example: https://stackoverflow.com/a/54658363
 jobs = Queue()
 
-langcnt = {}
-
 try:
     mkdir("out")
 except:
@@ -100,13 +98,12 @@ class GracefulKiller:
 gkiller = GracefulKiller()
 
 #microtasks
-def threadrunner(jobs: Queue):
-    global langcnt
+def threadrunner():
+    jobs = Queue()
     ydl = YoutubeDL({"extract_flat": "in_playlist", "simulate": True, "skip_download": True, "quiet": True, "cookiefile": "cookies.txt", "source_address": "0.0.0.0", "call_home": False})
     while True:
         if not jobs.empty():
             task, vid, args = jobs.get()
-
             if task == "submitdiscovery":
                 tracker.add_item_to_tracker(args, vid)
             elif task == "discovery":
@@ -116,7 +113,7 @@ def threadrunner(jobs: Queue):
                         break
                     except BaseException as e:
                         print(e)
-                        print("Error in retrieving information, waiting 30 seconds")
+                        print("Error in retrieving information, waiting 30 seconds and trying again")
                         sleep(30)
                 if info[0] or info[1]: # ccenabled or creditdata
                     if not isdir("out/"+str(vid).strip()):
@@ -125,11 +122,16 @@ def threadrunner(jobs: Queue):
                     open("out/"+str(vid).strip()+"/"+str(vid).strip()+"_published_credits.json", "w").write(dumps(info[1]))
 
                 if info[0]:
-                    langcnt[vid] = 0
                     for langcode in langs:
                         jobs.put(("subtitles", vid, langcode))
-                else:
-                    jobs.put(("complete", None, "video:"+vid))
+
+                    for langcode in langs:
+                        jobs.put(("subtitles-forceedit-metadata", vid, langcode))
+
+                    for langcode in langs:
+                        jobs.put(("subtitles-forceedit-captions", vid, langcode))
+
+                jobs.put(("complete", None, "video:"+vid))
 
                 for videodisc in info[2]:
                     jobs.put(("submitdiscovery", videodisc, tracker.ItemType.Video))
@@ -141,14 +143,11 @@ def threadrunner(jobs: Queue):
                     jobs.put(("submitdiscovery", playldisc, tracker.ItemType.Playlist))
 
             elif task == "subtitles":
-                retval = subprrun(jobs, mysession, args, vid, "default")
-                langcnt[vid] += retval
-                if langcnt[vid] >= 585:
-                    jobs.put(("complete", None, "video:"+vid))
+                subprrun(mysession, args, vid, "default", needforcemetadata, needforcecaptions)
             elif task == "subtitles-forceedit-captions":
-                subprrun(jobs, mysession, args, vid, "forceedit-captions")
+                subprrun(mysession, args, vid, "forceedit-captions", needforcemetadata, needforcecaptions)
             elif task == "subtitles-forceedit-metadata":
-                subprrun(jobs, mysession, args, vid, "forceedit-metadata")
+                subprrun(mysession, args, vid, "forceedit-metadata", needforcemetadata, needforcecaptions)
             elif task == "channel":
                 try:
                     y = ydl.extract_info("https://www.youtube.com/channel/"+desit.split(":", 1)[1], download=False)
@@ -216,8 +215,31 @@ def threadrunner(jobs: Queue):
                 collect() #cleanup
                 desit = tracker.request_item_from_tracker()
                 print("New task:", desit)
+
                 if desit:
                     if desit.split(":", 1)[0] == "video":
+                        needforcemetadata = {'ab': None, 'aa': None, 'af': None, 'sq': None, 'ase': None, 'am': None, 'ar': None, 'arc': None, 'hy': None, 'as': None, 'ay': None, 'az': None, 'bn': None, 'ba': None, 'eu': None, 'be': None, 'bh': None, 'bi': None, 'bs': None, 'br': None, 
+                            'bg': None, 'yue': None, 'yue-HK': None, 'ca': None, 'chr': None, 'zh-CN': None, 'zh-HK': None, 'zh-Hans': None, 'zh-SG': None, 'zh-TW': None, 'zh-Hant': None, 'cho': None, 'co': None, 'hr': None, 'cs': None, 'da': None, 'nl': None, 
+                            'nl-BE': None, 'nl-NL': None, 'dz': None, 'en': None, 'en-CA': None, 'en-IN': None, 'en-IE': None, 'en-GB': None, 'en-US': None, 'eo': None, 'et': None, 'fo': None, 'fj': None, 'fil': None, 'fi': None, 'fr': None, 'fr-BE': None, 
+                            'fr-CA': None, 'fr-FR': None, 'fr-CH': None, 'ff': None, 'gl': None, 'ka': None, 'de': None, 'de-AT': None, 'de-DE': None, 'de-CH': None, 'el': None, 'kl': None, 'gn': None, 'gu': None, 'ht': None, 'hak': None, 'hak-TW': None, 'ha': None, 
+                            'iw': None, 'hi': None, 'hi-Latn': None, 'ho': None, 'hu': None, 'is': None, 'ig': None, 'id': None, 'ia': None, 'ie': None, 'iu': None, 'ik': None, 'ga': None, 'it': None, 'ja': None, 'jv': None, 'kn': None, 'ks': None, 'kk': None, 'km': None, 'rw': None, 
+                            'tlh': None, 'ko': None, 'ku': None, 'ky': None, 'lo': None, 'la': None, 'lv': None, 'ln': None, 'lt': None, 'lb': None, 'mk': None, 'mg': None, 'ms': None, 'ml': None, 'mt': None, 'mni': None, 'mi': None, 'mr': None, 'mas': None, 'nan': None, 
+                            'nan-TW': None, 'lus': None, 'mo': None, 'mn': None, 'my': None, 'na': None, 'nv': None, 'ne': None, 'no': None, 'oc': None, 'or': None, 'om': None, 'ps': None, 'fa': None, 'fa-AF': None, 'fa-IR': None, 'pl': None, 'pt': None, 'pt-BR': None, 
+                            'pt-PT': None, 'pa': None, 'qu': None, 'ro': None, 'rm': None, 'rn': None, 'ru': None, 'ru-Latn': None, 'sm': None, 'sg': None, 'sa': None, 'sc': None, 'gd': None, 'sr': None, 'sr-Cyrl': None, 'sr-Latn': None, 'sh': None, 'sdp': None, 'sn': None, 
+                            'scn': None, 'sd': None, 'si': None, 'sk': None, 'sl': None, 'so': None, 'st': None, 'es': None, 'es-419': None, 'es-MX': None, 'es-ES': None, 'es-US': None, 'su': None, 'sw': None, 'ss': None, 'sv': None, 'tl': None, 'tg': None, 'ta': None, 
+                            'tt': None, 'te': None, 'th': None, 'bo': None, 'ti': None, 'tpi': None, 'to': None, 'ts': None, 'tn': None, 'tr': None, 'tk': None, 'tw': None, 'uk': None, 'ur': None, 'uz': None, 'vi': None, 'vo': None, 'vor': None, 'cy': None, 'fy': None, 'wo': None, 
+                            'xh': None, 'yi': None, 'yo': None, 'zu': None}
+                        needforcecaptions = {'ab': None, 'aa': None, 'af': None, 'sq': None, 'ase': None, 'am': None, 'ar': None, 'arc': None, 'hy': None, 'as': None, 'ay': None, 'az': None, 'bn': None, 'ba': None, 'eu': None, 'be': None, 'bh': None, 'bi': None, 'bs': None, 'br': None, 
+                            'bg': None, 'yue': None, 'yue-HK': None, 'ca': None, 'chr': None, 'zh-CN': None, 'zh-HK': None, 'zh-Hans': None, 'zh-SG': None, 'zh-TW': None, 'zh-Hant': None, 'cho': None, 'co': None, 'hr': None, 'cs': None, 'da': None, 'nl': None, 
+                            'nl-BE': None, 'nl-NL': None, 'dz': None, 'en': None, 'en-CA': None, 'en-IN': None, 'en-IE': None, 'en-GB': None, 'en-US': None, 'eo': None, 'et': None, 'fo': None, 'fj': None, 'fil': None, 'fi': None, 'fr': None, 'fr-BE': None, 
+                            'fr-CA': None, 'fr-FR': None, 'fr-CH': None, 'ff': None, 'gl': None, 'ka': None, 'de': None, 'de-AT': None, 'de-DE': None, 'de-CH': None, 'el': None, 'kl': None, 'gn': None, 'gu': None, 'ht': None, 'hak': None, 'hak-TW': None, 'ha': None, 
+                            'iw': None, 'hi': None, 'hi-Latn': None, 'ho': None, 'hu': None, 'is': None, 'ig': None, 'id': None, 'ia': None, 'ie': None, 'iu': None, 'ik': None, 'ga': None, 'it': None, 'ja': None, 'jv': None, 'kn': None, 'ks': None, 'kk': None, 'km': None, 'rw': None, 
+                            'tlh': None, 'ko': None, 'ku': None, 'ky': None, 'lo': None, 'la': None, 'lv': None, 'ln': None, 'lt': None, 'lb': None, 'mk': None, 'mg': None, 'ms': None, 'ml': None, 'mt': None, 'mni': None, 'mi': None, 'mr': None, 'mas': None, 'nan': None, 
+                            'nan-TW': None, 'lus': None, 'mo': None, 'mn': None, 'my': None, 'na': None, 'nv': None, 'ne': None, 'no': None, 'oc': None, 'or': None, 'om': None, 'ps': None, 'fa': None, 'fa-AF': None, 'fa-IR': None, 'pl': None, 'pt': None, 'pt-BR': None, 
+                            'pt-PT': None, 'pa': None, 'qu': None, 'ro': None, 'rm': None, 'rn': None, 'ru': None, 'ru-Latn': None, 'sm': None, 'sg': None, 'sa': None, 'sc': None, 'gd': None, 'sr': None, 'sr-Cyrl': None, 'sr-Latn': None, 'sh': None, 'sdp': None, 'sn': None, 
+                            'scn': None, 'sd': None, 'si': None, 'sk': None, 'sl': None, 'so': None, 'st': None, 'es': None, 'es-419': None, 'es-MX': None, 'es-ES': None, 'es-US': None, 'su': None, 'sw': None, 'ss': None, 'sv': None, 'tl': None, 'tg': None, 'ta': None, 
+                            'tt': None, 'te': None, 'th': None, 'bo': None, 'ti': None, 'tpi': None, 'to': None, 'ts': None, 'tn': None, 'tr': None, 'tk': None, 'tw': None, 'uk': None, 'ur': None, 'uz': None, 'vi': None, 'vo': None, 'vor': None, 'cy': None, 'fy': None, 'wo': None, 
+                            'xh': None, 'yi': None, 'yo': None, 'zu': None}
                         jobs.put(("discovery", desit.split(":", 1)[1], None))
                     elif desit.split(":", 1)[0] == "channel":
                         jobs.put(("channel", None, desit.split(":", 1)[1]))
@@ -238,7 +260,7 @@ if HEROKU:
     THREADCNT = 20
 #now create the rest of the threads
 for i in range(THREADCNT):
-    runthread = Thread(target=threadrunner, args=(jobs,))
+    runthread = Thread(target=threadrunner)
     runthread.start()
     threads.append(runthread)
     del runthread
