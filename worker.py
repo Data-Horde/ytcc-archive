@@ -11,7 +11,7 @@ import tracker
 
 from youtube_dl import YoutubeDL
 
-from shutil import rmtree
+from shutil import rmtree, which
 
 from queue import Queue
 
@@ -54,6 +54,8 @@ langs = ['ab', 'aa', 'af', 'sq', 'ase', 'am', 'ar', 'arc', 'hy', 'as', 'ay', 'az
     'scn', 'sd', 'si', 'sk', 'sl', 'so', 'st', 'es', 'es-419', 'es-MX', 'es-ES', 'es-US', 'su', 'sw', 'ss', 'sv', 'tl', 'tg', 'ta', 
     'tt', 'te', 'th', 'bo', 'ti', 'tpi', 'to', 'ts', 'tn', 'tr', 'tk', 'tw', 'uk', 'ur', 'uz', 'vi', 'vo', 'vor', 'cy', 'fy', 'wo', 
     'xh', 'yi', 'yo', 'zu']
+
+assert which("zip") and which("rsync") and which("curl"), "Please ensure the zip, rsync, and curl commands are installed on your system."
 
 #HSID, SSID, SID cookies required
 if "HSID" in environ.keys() and "SSID" in environ.keys() and "SID" in environ.keys():
