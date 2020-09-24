@@ -253,8 +253,11 @@ del runthread
 
 sleep(5)
 
-#now create the other 49 threads
-for i in range(49):
+THREADCNT = 49
+if HEROKU:
+    THREADCNT = 19
+#now create the rest of the threads
+for i in range(THREADCNT):
     runthread = Thread(target=threadrunner, args=(jobs,))
     runthread.start()
     threads.append(runthread)
