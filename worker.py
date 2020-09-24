@@ -163,7 +163,7 @@ def threadrunner(jobs: Queue):
                         jobs.put(("complete", None, "channel:"+args))
                         break
                     except:
-                        print("YouTube-DL error, ignoring but not marking as complete...")
+                        print("YouTube-DL error, ignoring but not marking as complete...", "https://www.youtube.com/channel/"+desit.split(":", 1)[1])
             elif task == "playlist":
                 while True:
                     try:
@@ -173,7 +173,7 @@ def threadrunner(jobs: Queue):
                         jobs.put(("complete", None, "playlist:"+args))
                         break
                     except:
-                        print("YouTube-DL error, ignoring but not marking as complete...")
+                        print("YouTube-DL error, ignoring but not marking as complete...", "https://www.youtube.com/playlist?list="+desit.split(":", 1)[1])
             elif task == "complete":
                 size = 0
                 if ":" in args:
