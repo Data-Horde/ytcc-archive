@@ -153,12 +153,24 @@ def threadrunner(jobs: Queue):
             elif task == "subtitles-forceedit-metadata":
                 subprrun(jobs, mysession, args, vid, "forceedit-metadata")
             elif task == "channel":
-                y = ydl.extract_info("https://www.youtube.com/channel/"+desit.split(":", 1)[1], download=False)
+                while True:
+                    try:
+                        y = ydl.extract_info("https://www.youtube.com/channel/"+desit.split(":", 1)[1], download=False)
+                        break
+                    except:
+                        print("YouTube-DL error, waiting 30 seconds...")
+                        sleep(30)
                 for itemyv in y["entries"]:
                     jobs.put(("submitdiscovery", itemyv["id"], tracker.ItemType.Video))
                 jobs.put(("complete", None, "channel:"+args))
             elif task == "playlist":
-                y = ydl.extract_info("https://www.youtube.com/playlist?list="+desit.split(":", 1)[1], download=False)
+                while True:
+                    try:
+                        y = ydl.extract_info("https://www.youtube.com/playlist?list="+desit.split(":", 1)[1], download=False)
+                        break
+                    except:
+                        print("YouTube-DL error, waiting 30 seconds...")
+                        sleep(30)
                 for itemyvp in y["entries"]:
                     jobs.put(("submitdiscovery", itemyvp["id"], tracker.ItemType.Video))
                 jobs.put(("complete", None, "playlist:"+args))
