@@ -127,10 +127,10 @@ def subprrun(jobs, mysession, langcode, vid, mode):
 
                 page = mysession.get("https://www.youtube.com/timedtext_editor", params=pparams)
 
-            if not "accounts.google.com" in page.url:
+            if not "accounts.google.com" in page.url and page.status_code != 429:
                 break
             else:
-                print("[Retrying in 30 seconds] Please supply authentication cookie information in config.json or environment variables. See README.md for more information.")
+                print("[Retrying in 30 seconds for rate limit or login failure] Please supply authentication cookie information in config.json or environment variables. See README.md for more information.")
                 sleep(30)
         except:
             print("Error in request, retrying in 5 seconds...")
