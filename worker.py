@@ -17,8 +17,6 @@ from queue import Queue
 
 from gc import collect
 
-from datetime import timedelta, datetime
-
 from discovery import getmetadata
 from export import subprrun
 
@@ -26,8 +24,6 @@ from export import subprrun
 jobs = Queue()
 
 langcnt = {}
-
-lasttask = datetime.min
 
 try:
     mkdir("out")
@@ -221,41 +217,27 @@ def threadrunner(jobs: Queue):
             jobs.task_done()
         else:
             # get a new task from tracker
-            if datetime.now() - lasttask > timedelta(seconds=15): #only retrieve a task every 15 seconds to allow queue to build up
-                collect() #cleanup
-                desit = tracker.request_item_from_tracker()
-                print("New task:", desit)
-                if desit:
-                    if desit.split(":", 1)[0] == "video":
-                        lasttask = datetime.now()
-                        jobs.put(("discovery", desit.split(":", 1)[1], None))
-                    elif desit.split(":", 1)[0] == "channel":
-                        lasttask = datetime.now()
-                        jobs.put(("channel", None, desit.split(":", 1)[1]))
-                    elif desit.split(":", 1)[0] == "playlist":
-                        lasttask = datetime.now()
-                        jobs.put(("playlist", None, desit.split(":", 1)[1]))
-                    else:
-                        print("Ignoring item for now", desit)
+            collect() #cleanup
+            desit = tracker.request_item_from_tracker()
+            print("New task:", desit)
+            if desit:
+                if desit.split(":", 1)[0] == "video":
+                    jobs.put(("discovery", desit.split(":", 1)[1], None))
+                elif desit.split(":", 1)[0] == "channel":
+                    jobs.put(("channel", None, desit.split(":", 1)[1]))
+                elif desit.split(":", 1)[0] == "playlist":
+                    jobs.put(("playlist", None, desit.split(":", 1)[1]))
                 else:
                     print("Ignoring item for now", desit)
             else:
-                sleep(1)
+                print("Ignoring item for now", desit)
     
 
 threads = []
 
-#start with 1 thread, give it a 5 second head start
-runthread = Thread(target=threadrunner, args=(jobs,))
-runthread.start()
-threads.append(runthread)
-del runthread
-
-sleep(5)
-
-THREADCNT = 49
+THREADCNT = 50
 if HEROKU:
-    THREADCNT = 19
+    THREADCNT = 20
 #now create the rest of the threads
 for i in range(THREADCNT):
     runthread = Thread(target=threadrunner, args=(jobs,))
