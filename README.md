@@ -9,7 +9,7 @@ tutorial for more details](https://github.com/Data-Horde/ytcc-archive/wiki/Setup
 
 ## Primary Usage
 
-### Heroku⭐️⭐️⭐️ (Minimal Setup Required!)
+### Heroku⭐️⭐️⭐️ (Minimal Setup! Minimal Maintence!)
 A wrapper repo for free and easy deployment and environment configuration, as well automatic updates every 24-27.6 hours is available. Deploy up to 5 instances of it to a free Heroku account (total max monthly runtime 550 hours) with no need for credit card verification by clicking the button below.
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/Data-Horde/ytcc-archive-heroku)
