@@ -1,6 +1,8 @@
 # YouTube Community Contributions Archiving Worker
 
-Worker for the `Save Community Captions` project: Archiving unpublished YouTube community-contributions.
+Worker for the `Save Community Captions` project: Archiving unpublished YouTube community-contributions. 
+
+[Lost? Click here to learn what this is all about!](https://github.com/Data-Horde/ytcc-archive/wiki/General-Information)
 
 ## Setup
 
