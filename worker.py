@@ -5,6 +5,16 @@ from os import mkdir, rmdir, listdir, system, environ
 from os.path import isdir, isfile, getsize
 from json import dumps, loads
 
+HEROKU = False
+if isfile("../Procfile") and isfile("../requirements.txt"):
+    print("Heroku detected... using 20 threads instead of 50.")
+    HEROKU = True
+
+if HEROKU:
+    if not "aioquic" in open("../requirements.txt").read():
+        print("Installing aioquic on this Heroku instance since it wasn't installed on deploy...")
+        system("pip install --user aioquic")
+
 import signal
 
 import tracker
@@ -32,10 +42,6 @@ try:
     mkdir("directory")
 except:
     pass
-
-HEROKU = False
-if isfile("../Procfile"):
-    HEROKU = True
 
 langs = ['ab', 'aa', 'af', 'sq', 'ase', 'am', 'ar', 'arc', 'hy', 'as', 'ay', 'az', 'bn', 'ba', 'eu', 'be', 'bh', 'bi', 'bs', 'br', 
     'bg', 'yue', 'yue-HK', 'ca', 'chr', 'zh-CN', 'zh-HK', 'zh-Hans', 'zh-SG', 'zh-TW', 'zh-Hant', 'cho', 'co', 'hr', 'cs', 'da', 'nl', 
