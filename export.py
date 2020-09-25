@@ -139,7 +139,7 @@ def subprrun(mysession, langcode, vid, mode, needforcemetadata, needforcecaption
 
                 page = mysession.get("https://www.youtube.com/timedtext_editor", params=pparams)
 
-            if not "accounts.google.com" in page.url and page.status_code != 429 and 'Subtitles/CC' in page.text and 'Title &amp; description' in page.text:
+            if not "accounts.google.com" in page.url and page.status_code != 429 and 'Subtitles/CC' in page.text and ('Title &amp; description' in page.text or 'Title and description' in page.text):
                 break
             else:
                 print("[Retrying in 30 seconds for rate limit or login failure] Please supply authentication cookie information in config.json or environment variables. See README.md for more information.")
