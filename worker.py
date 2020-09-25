@@ -1,6 +1,7 @@
 from os import system
 from os.path import isfile
 from sys import exit
+from importlib.util import find_spec
 
 HEROKU = False
 if isfile("../Procfile") and isfile("../requirements.txt"):
@@ -8,7 +9,7 @@ if isfile("../Procfile") and isfile("../requirements.txt"):
     HEROKU = True
 
 if HEROKU:
-    if not "aioquic" in open("../requirements.txt").read():
+    if find_spec("aioquic") is None:
         print("Installing aioquic on this Heroku instance since it wasn't installed on deploy...")
         system("python3 -m pip install --user aioquic")
         system("python3 worker.py")
