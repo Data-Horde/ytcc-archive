@@ -1,5 +1,6 @@
 from os import system
 from os.path import isfile
+from time import sleep
 HEROKU = False
 if isfile("../Procfile") and isfile("../requirements.txt"):
     print("Heroku detected... using 20 threads instead of 50.")
@@ -9,6 +10,8 @@ if HEROKU:
     if not "aioquic" in open("../requirements.txt").read():
         print("Installing aioquic on this Heroku instance since it wasn't installed on deploy...")
         system("python3 -m pip install --user aioquic")
+
+sleep(5)
 
 import asyncio
 from typing import cast
