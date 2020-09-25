@@ -155,6 +155,7 @@ def subprrun(mysession, langcode, vid, mode, needforcemetadata, needforcecaption
                     sleep(30)
         except:
             print("Error in request, retrying in 5 seconds...")
+            raise
             sleep(5)
 
     inttext = page.text
