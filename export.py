@@ -38,7 +38,8 @@ from time import sleep
 # https://docs.python.org/3/library/html.parser.html
 from html.parser import HTMLParser
 
-backend = "http3"
+backend = "requests"
+failcnt = 0
 
 from switchable_request import get
 
@@ -85,6 +86,7 @@ class MyHTMLParser(HTMLParser):
 
 def subprrun(mysession, langcode, vid, mode, needforcemetadata, needforcecaptions, allheaders):
     global backend
+    global failcnt
     if mode == "forceedit-metadata":
         while needforcemetadata[langcode] == None: #extra logic
             print("Awaiting forcemetadata")
@@ -147,9 +149,13 @@ def subprrun(mysession, langcode, vid, mode, needforcemetadata, needforcecaption
             if not "accounts.google.com" in page.url and page.status_code != 429 and 'Subtitles/CC' in page.text and 'Title &amp; description' in page.text:
                 break
             else:
-                if backend == "requests":
+                if backend == "requests" and failcnt > 30:
                     backend = "http3"
                     print("Rate limit or login failure, switching export to HTTP3/QUIC...")
+                elif backend == "http3" and failcnt < 30:
+                    failcnt += 1
+                    print("Rate limit or login failure, waiting 30 seconds... ", 30-failcnt, "attempts left until switching export to HTTP3/QUIC.")
+                    sleep(30)
                 else:
                     print("[Retrying in 30 seconds for rate limit or login failure] Please supply authentication cookie information in config.json or environment variables. See README.md for more information.")
                     sleep(30)

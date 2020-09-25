@@ -4,12 +4,14 @@ from json import loads
 
 from switchable_request import get
 
-backend = "http3"
+backend = "requests"
+failcnt = 0
 
 langcodes = {"Afar": "aa", "Abkhazian": "ab", "Afrikaans": "af", "Akan": "ak", "all": "all", "Amharic": "am", "Aragonese": "an", "Arabic": "ar", "Aramaic": "arc", "Algerian Arabic": "arq", "Assamese": "as", "American Sign Language": "ase", "Asturian": "ast", "Avaric": "av", "Aymara": "ay", "Azerbaijani": "az", "Bashkir": "ba", "Belarusian": "be", "Bulgarian": "bg", "Bihari": "bh", "Bislama": "bi", "Bangla": "bn", "Tibetan": "bo", "Breton": "br", "Bosnian": "bs", "Catalan": "ca", "Cebuano": "ceb", "Choctaw": "cho", "Cherokee": "chr", "Corsican": "co", "Czech": "cs", "Church Slavic": "cu", "Welsh": "cy", "Danish": "da", "Danish (Denmark)": "da-DK", "German": "de", "German (Austria)": "de-AT", "German (Switzerland)": "de-CH", "German (Germany)": "de-DE", "Divehi": "dv", "Dzongkha": "dz", "Ewe": "ee", "Greek": "el", "English": "en", "English (United Arab Emirates)": "en-AE", "English (Canada)": "en-CA", "English (United Kingdom)": "en-GB", "English (Ireland)": "en-IE", "English (India)": "en-IN", "English (United States)": "en-US", "Esperanto": "eo", "Spanish": "es", "Spanish (Latin America)": "es-419", "Spanish (Argentina)": "es-AR", "Spanish (Chile)": "es-CL", "Spanish (Colombia)": "es-CO", "Spanish (Costa Rica)": "es-CR", "Spanish (Spain)": "es-ES", "Spanish (Mexico)": "es-MX", "Spanish (Nicaragua)": "es-NI", "Spanish (United States)": "es-US", "Estonian": "et", "Basque": "eu", "Persian": "fa", "Persian (Afghanistan)": "fa-AF", "Persian (Iran)": "fa-IR", "Fulah": "ff", "Finnish": "fi", "Filipino": "fil", "Fijian": "fj", "Faroese": "fo", "French": "fr", "French (Belgium)": "fr-BE", "French (Canada)": "fr-CA", "French (Switzerland)": "fr-CH", "French (France)": "fr-FR", "Western Frisian": "fy", "Irish": "ga", "Scottish Gaelic": "gd", "Galician": "gl", "Guarani": "gn", "Swiss German": "gsw", "Gujarati": "gu", "Hausa": "ha", "Hakka Chinese": "hak", "Hakka Chinese (Taiwan)": "hak-TW", "Hindi": "hi-Latn", "Hmong": "hmn", "Croatian": "hr", "Haitian Creole": "ht", "Hungarian": "hu", "Armenian": "hy", "Interlingua": "ia", "Indonesian": "id", "Interlingue": "ie", "Igbo": "ig", "Sichuan Yi": "ii", "Inupiaq": "ik", "Icelandic": "is", "Italian": "it", "Italian (Italy)": "it-IT", "Inuktitut": "iu", "Hebrew": "iw", "Japanese": "ja", "Javanese": "jv", "Georgian": "ka", "Kazakh": "kk", "Kalaallisut": "kl", "Khmer": "km", "Kannada": "kn", "Korean": "ko", "Korean (South Korea)": "ko-KR", "Kanuri": "kr", "Kashmiri": "ks", "Kurdish": "ku", "Kyrgyz": "ky", "Latin": "la", "Luxembourgish": "lb", "Lingala": "ln", "Lao": "lo", "Lithuanian": "lt", "Mizo": "lus", "Latvian": "lv", "Masai": "mas", "Malagasy": "mg", "Maori": "mi", "Miscellaneous languages": "mis", "Macedonian": "mk", "Malayalam": "ml", "Mongolian": "mn", "Manipuri": "mni", "Moldavian": "mo", "Marathi": "mr", "Malay": "ms", "Maltese": "mt", "Burmese": "my", "Nauru": "na", "Min Nan Chinese": "nan", "Min Nan Chinese (Taiwan)": "nan-TW", "Nepali": "ne", "Dutch": "nl", "Dutch (Belgium)": "nl-BE", "Dutch (Netherlands)": "nl-NL", "Norwegian Nynorsk": "nn", "Norwegian": "no", "not": "not", "Navajo": "nv", "Occitan": "oc", "Oromo": "om", "Odia": "or", "Punjabi": "pa", "Polish": "pl", "Polish (Poland)": "pl-PL", "Pashto": "ps", "Portuguese": "pt", "Portuguese (Brazil)": "pt-BR", "Portuguese (Portugal)": "pt-PT", "Quechua": "qu", "Romansh": "rm", "Rundi": "rn", "Romanian": "ro", "Romanian (Moldova)": "ro-MD", "Russian": "ru-Latn", "Russian (Russia)": "ru-RU", "Kinyarwanda": "rw", "Sanskrit": "sa", "Sardinian": "sc", "Sicilian": "scn", "Scots": "sco", "Sindhi": "sd", "Sherdukpen": "sdp", "Northern Sami": "se", "Sango": "sg", "Serbo-Croatian": "sh", "Sinhala": "si", "Slovak": "sk", "Slovenian": "sl", "Samoan": "sm", "Shona": "sn", "Somali": "so", "Albanian": "sq", "Serbian": "sr", "Serbian (Cyrillic)": "sr-Cyrl", "Serbian (Latin)": "sr-Latn", "Swati": "ss", "Southern Sotho": "st", "Sundanese": "su", "Swedish": "sv", "Swahili": "sw", "Tamil": "ta", "Telugu": "te", "Tajik": "tg", "Thai": "th", "Tigrinya": "ti", "Turkmen": "tk", "Tagalog": "tl", "Klingon": "tlh", "Tswana": "tn", "Tongan": "to", "Turkish": "tr", "Turkish (Turkey)": "tr-TR", "Tsonga": "ts", "Tatar": "tt", "Twi": "tw", "Ukrainian": "uk", "Urdu": "ur", "Uzbek": "uz", "Vietnamese": "vi", "Volap\\xFCk": "vo", "Wolof": "wo", "Xhosa": "xh", "Yiddish": "yi", "Yoruba": "yo", "Cantonese": "yue", "Cantonese (Hong Kong)": "yue-HK", "Chinese": "zh", "Chinese (China)": "zh-CN", "Chinese (Hong Kong)": "zh-HK", "Chinese (Simplified)": "zh-Hans", "Chinese (Simplified, China)": "zh-Hans-CN", "Chinese (Simplified, Singapore)": "zh-Hans-SG", "Chinese (Traditional)": "zh-Hant", "Chinese (Traditional, Hong Kong)": "zh-Hant-HK", "Chinese (Traditional, Taiwan)": "zh-Hant-TW", "Chinese (Singapore)": "zh-SG", "Chinese (Taiwan)": "zh-TW", "Zulu": "zu", "Hiri Motu": "ho", "Tok Pisin": "tpi", "Voro": "vor"}
 
 def getmetadata(mysession, vid, allheaders):
     global backend
+    global failcnt
     params = (
         ("v", vid),
     )
@@ -22,9 +24,13 @@ def getmetadata(mysession, vid, allheaders):
 <p>To continue with your YouTube experience, please fill out the form below.</p>""" in wpage.text and not wpage.status_code == 429 and 'window["ytInitialPlayerResponse"] = ' in wpage.text and 'window["ytInitialData"] = ' in wpage.text:
             break
         else:
-            if backend == "requests":
+            if backend == "requests" and failcnt > 30:
                 backend = "http3"
                 print("Captcha detected, switching discovery to HTTP3/QUIC")
+            elif backend == "http3" and failcnt < 30:
+                failcnt += 1
+                print("Captcha detected, waiting 30 seconds... ", 30-failcnt, "attempts left until switching discovery to HTTP3/QUIC.")
+                sleep(30)
             else:
                 print("Captcha detected, waiting 30 seconds")
                 sleep(30)
