@@ -1,14 +1,25 @@
-from threading import Thread
-import requests
-from time import sleep
-from os import mkdir, rmdir, listdir, system, environ
-from os.path import isdir, isfile, getsize
-from json import dumps, loads
+from os import system
+from os.path import isfile
+from sys import exit
 
 HEROKU = False
 if isfile("../Procfile") and isfile("../requirements.txt"):
     print("Heroku detected... using 20 threads instead of 50.")
     HEROKU = True
+
+if HEROKU:
+    if not "aioquic" in open("../requirements.txt").read():
+        print("Installing aioquic on this Heroku instance since it wasn't installed on deploy...")
+        system("python3 -m pip install --user aioquic")
+        system("python3 worker.py")
+        exit(0)
+
+from threading import Thread
+import requests
+from time import sleep
+from os import mkdir, rmdir, listdir, environ
+from os.path import isdir, getsize
+from json import dumps, loads
 
 import signal
 
