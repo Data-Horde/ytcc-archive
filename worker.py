@@ -10,11 +10,6 @@ if isfile("../Procfile") and isfile("../requirements.txt"):
     print("Heroku detected... using 20 threads instead of 50.")
     HEROKU = True
 
-if HEROKU:
-    if not "aioquic" in open("../requirements.txt").read():
-        print("Installing aioquic on this Heroku instance since it wasn't installed on deploy...")
-        system("pip install --user aioquic")
-
 import signal
 
 import tracker
