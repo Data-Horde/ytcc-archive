@@ -1,23 +1,28 @@
 # YouTube Community Contributions Archiving Worker
-Export YouTube community-contributed captioning to SBV files. Export YouTube community-contributed titles and descriptions to JSON. Export published caption credits to JSON.
+
+Worker for the `Save Community Captions` project: Archiving unpublished YouTube community-contributions.
 
 ## Setup
-Ensure that `python` 3.8.5, `zip`, `curl`, and `rsync` are installed on your system. Install the Python module requirements in the requirements.txt file (`pip install -r requirements.txt`). Because the captioning editor is only available to logged-in users, you must specify the values of three session cookies for any Google account (`HSID`, `SSID`, and `SID`). You can get these cookie values by opening the developer tools on any youtube.com webpage, going to the "Application" (Chrome) or "Storage" (Firefox) tab, selecting "Cookies", and copying the required values. These values can be specified in the `config.json` file or as environment variables (`SSID`, `SID`, `HSID`). The `TRACKER_USERNAME` can also be specified in `config.json` or as an environment variable. This is the name that is used for the [dashboard](https://tracker.archiveteam.org/ext-yt-communitycontribs/).
+
+To run these tools you will need to supply session cookies (SSID,HSID,SID) [see the
+tutorial for more details](https://github.com/Data-Horde/ytcc-archive/wiki/Setup-Tutorial).
 
 ## Primary Usage
-### Archiving Worker:
-After completing the above setup steps, simply run `python3 worker.py`.
 
-### Heroku
+### Heroku⭐️⭐️⭐️ (Minimal Setup Required!)
 A wrapper repo for free and easy deployment and environment configuration, as well automatic updates every 24-27.6 hours is available. Deploy up to 5 instances of it to a free Heroku account (total max monthly runtime 550 hours) with no need for credit card verification by clicking the button below.
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/Data-Horde/ytcc-archive-heroku)
 
-### Docker image
+### Archiving Worker⭐️
+After completing the above setup steps, simply run 
+```bash
+python3 worker.py
+```
+
+### Docker image⭐️⭐️
 
 Stable Docker Image:
-
-Docker Image:
 ```bash
 docker pull fusl/ytcc-archive
 ```
@@ -26,7 +31,6 @@ Run:
 ```bash
 docker container run --restart=unless-stopped --network=host -d --tmpfs /grab/out --name=grab_ext-yt-communitycontribs -e HSID=XXX-e SID=XXX -e SSID=XXX -e TRACKER_USERNAME=Fusl -e PYTHONUNBUFFERED=1 fusl/ytcc-archive
 ```
-
 ## Bonus Features
 ### Export Captions and Titles/Descriptions Manually
 Simply run `python3 exporter.py` followed by a list of space-separated YouTube video IDs, and all community-contributed captioning and titles/descriptions in all languages will be exported.
