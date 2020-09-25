@@ -37,37 +37,35 @@ async def main(address, headers={}):
     async with connect(parsed.netloc, port=443, configuration=configuration, create_protocol=HttpClient) as client:
         client = cast(HttpClient, client)
 
-        events = await perform_http_request(client=client, url=address, headers=headers)
+        redirect = False
+        while True:
+            events = await perform_http_request(client=client, url=address, headers=headers)
 
-        return prepare_response(events)
+            oheaders, ocontent = prepare_response(events)
+
+            statuscode = int(oheaders[b":status"])
+            if statuscode >= 300 and statuscode < 400 and b"location" in oheaders.keys():
+                redirect = True
+                origurl = address
+                parsedorig = urlparse(origurl)
+                address = oheaders[b"location"].decode()
+                parsednew = urlparse(address)
+                if not parsednew.scheme and not parsednew.netloc:
+                    address = parsedorig.scheme + "://" + parsedorig.netloc + address
+            else:
+                break
+
+        return HTTP3Response((oheaders, ocontent, address, redirect))
 
 def get(url, headers={}, params={}):
     plist = []
     for item in params:
-        #print(item)
         k, v = item
         plist.append(str(k)+"="+str(v))
     if plist:
         pstring = "?"+"&".join(plist)
     else:
         pstring = ""
-    #print(url+pstring)
-    redirect = False
     url = url+pstring
-    while True:
-        #print(url)
-        loop = asyncio.new_event_loop()
-        oheaders, ocontent = loop.run_until_complete(main(url, headers=headers))
-        statuscode = int(oheaders[b":status"])
-        if statuscode >= 300 and statuscode < 400 and b"location" in oheaders.keys():
-            #print("Redirection")
-            redirect = True
-            origurl = url
-            parsedorig = urlparse(origurl)
-            url = oheaders[b"location"].decode()
-            parsednew = urlparse(url)
-            if not parsednew.scheme and not parsednew.netloc:
-                url = parsedorig.scheme + "://" + parsedorig.netloc + url
-        else:
-            break
-    return HTTP3Response((oheaders, ocontent, url+pstring, redirect))
+    loop = asyncio.new_event_loop()
+    return loop.run_until_complete(main(url, headers=headers))
