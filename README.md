@@ -18,10 +18,14 @@ A wrapper repo for free and easy deployment and environment configuration, as we
 Stable Docker Image:
 
 Docker Image:
-`docker pull fusl/ytcc-archive`
+```bash
+docker pull fusl/ytcc-archive
+```
 
 Run:
-`docker container run --restart=unless-stopped --network=host -d --tmpfs /grab/out --name=grab_ext-yt-communitycontribs -e HSID=XXX-e SID=XXX -e SSID=XXX -e TRACKER_USERNAME=Fusl -e PYTHONUNBUFFERED=1 fusl/ytcc-archive`
+```bash
+docker container run --restart=unless-stopped --network=host -d --tmpfs /grab/out --name=grab_ext-yt-communitycontribs -e HSID=XXX-e SID=XXX -e SSID=XXX -e TRACKER_USERNAME=Fusl -e PYTHONUNBUFFERED=1 fusl/ytcc-archive
+```
 
 ## Bonus Features
 ### Export Captions and Titles/Descriptions Manually
