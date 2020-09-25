@@ -38,6 +38,10 @@ from time import sleep
 # https://docs.python.org/3/library/html.parser.html
 from html.parser import HTMLParser
 
+backend = "http3"
+
+from switchable_request import get
+
 class MyHTMLParser(HTMLParser):
     def __init__(self):
         HTMLParser.__init__(self)
@@ -79,7 +83,8 @@ class MyHTMLParser(HTMLParser):
         elif self.get_starttag_text() and self.get_starttag_text().startswith('<div id="original-video-title"'):
             self.inittitle += data
 
-def subprrun(mysession, langcode, vid, mode, needforcemetadata, needforcecaptions):
+def subprrun(mysession, langcode, vid, mode, needforcemetadata, needforcecaptions, allheaders):
+    global backend
     if mode == "forceedit-metadata":
         while needforcemetadata[langcode] == None: #extra logic
             print("Awaiting forcemetadata")
@@ -114,7 +119,7 @@ def subprrun(mysession, langcode, vid, mode, needforcemetadata, needforcecaption
                     ("o", "U")
                 )
 
-                page = mysession.get("https://www.youtube.com/timedtext_editor", params=pparams)
+                page = get("https://www.youtube.com/timedtext_editor", params=pparams, mysession=mysession, backend=backend, http3headers=allheaders)
             elif mode == "forceedit-metadata":
                 pparams = (
                     ("v", vid),
@@ -124,7 +129,7 @@ def subprrun(mysession, langcode, vid, mode, needforcemetadata, needforcecaption
                     ('tab', 'metadata')
                 )
 
-                page = mysession.get("https://www.youtube.com/timedtext_editor", params=pparams)
+                page = get("https://www.youtube.com/timedtext_editor", params=pparams, mysession=mysession, backend=backend, http3headers=allheaders)
             elif mode == "forceedit-captions":
                 pparams = (
                     ("v", vid),
@@ -137,13 +142,17 @@ def subprrun(mysession, langcode, vid, mode, needforcemetadata, needforcecaption
                     ("o", "U")
                 )
 
-                page = mysession.get("https://www.youtube.com/timedtext_editor", params=pparams)
+                page = get("https://www.youtube.com/timedtext_editor", params=pparams, mysession=mysession, backend=backend, http3headers=allheaders)
 
             if not "accounts.google.com" in page.url and page.status_code != 429 and 'Subtitles/CC' in page.text and 'Title &amp; description' in page.text:
                 break
             else:
-                print("[Retrying in 30 seconds for rate limit or login failure] Please supply authentication cookie information in config.json or environment variables. See README.md for more information.")
-                sleep(30)
+                if backend == "requests":
+                    backend = "http3"
+                    print("Rate limit or login failure, switching export to HTTP3/QUIC...")
+                else:
+                    print("[Retrying in 30 seconds for rate limit or login failure] Please supply authentication cookie information in config.json or environment variables. See README.md for more information.")
+                    sleep(30)
         except:
             print("Error in request, retrying in 5 seconds...")
             sleep(5)

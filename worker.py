@@ -64,6 +64,7 @@ if not (cookies["HSID"] and cookies["SSID"] and cookies["SID"]):
     assert False
 
 mysession = requests.session()
+allheaders = {"cookie": "HSID="+cookies["HSID"]+"; SSID="+cookies["SSID"]+"; SID="+cookies["SID"], "Accept-Language": "en-US",}
 mysession.headers.update({"cookie": "HSID="+cookies["HSID"]+"; SSID="+cookies["SSID"]+"; SID="+cookies["SID"], "Accept-Language": "en-US",})
 
 validationtest = mysession.get("https://www.youtube.com/timedtext_editor?action_mde_edit_form=1&v=1iNTtHUwvq4&lang=en&bl=vmp&ui=hd&ref=player&tab=captions&o=U")
@@ -109,11 +110,12 @@ def threadrunner():
             elif task == "discovery":
                 while True:
                     try:
-                        info = getmetadata(mysession, str(vid).strip())
+                        info = getmetadata(mysession, str(vid).strip(), allheaders)
                         break
                     except BaseException as e:
                         print(e)
                         print("Error in retrieving information, waiting 30 seconds and trying again")
+                        #raise
                         sleep(30)
                 if info[0] or info[1]: # ccenabled or creditdata
                     if not isdir("out/"+str(vid).strip()):
@@ -143,11 +145,11 @@ def threadrunner():
                     jobs.put(("submitdiscovery", playldisc, tracker.ItemType.Playlist))
 
             elif task == "subtitles":
-                subprrun(mysession, args, vid, "default", needforcemetadata, needforcecaptions)
+                subprrun(mysession, args, vid, "default", needforcemetadata, needforcecaptions, allheaders)
             elif task == "subtitles-forceedit-captions":
-                subprrun(mysession, args, vid, "forceedit-captions", needforcemetadata, needforcecaptions)
+                subprrun(mysession, args, vid, "forceedit-captions", needforcemetadata, needforcecaptions, allheaders)
             elif task == "subtitles-forceedit-metadata":
-                subprrun(mysession, args, vid, "forceedit-metadata", needforcemetadata, needforcecaptions)
+                subprrun(mysession, args, vid, "forceedit-metadata", needforcemetadata, needforcecaptions, allheaders)
             elif task == "channel":
                 try:
                     y = ydl.extract_info("https://www.youtube.com/channel/"+desit.split(":", 1)[1], download=False)
