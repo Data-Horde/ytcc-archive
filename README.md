@@ -1,5 +1,6 @@
 # YouTube Community Contributions Archiving Worker
-
+![Discord](https://img.shields.io/discord/755014354734153818?style=plastic)
+  
 Worker for the `Save Community Captions` project: Archiving unpublished YouTube community-contributions. 
 
 [Lost? Click here to learn what this is all about!](https://github.com/Data-Horde/ytcc-archive/wiki/General-Information)
