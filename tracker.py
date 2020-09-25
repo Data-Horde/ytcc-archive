@@ -9,7 +9,7 @@ from os.path import isfile
 from json import loads
 
 # https://github.com/ArchiveTeam/tencent-weibo-grab/blob/9bae5f9747e014db9227821a9c11557267967023/pipeline.py
-VERSION = "20200924.10"
+VERSION = "20200924.11"
 
 TRACKER_ID = "ext-yt-communitycontribs"
 TRACKER_HOST = "trackerproxy.meo.ws"

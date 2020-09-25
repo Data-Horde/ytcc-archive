@@ -5,10 +5,11 @@ from aioquic.h3.connection import H3_ALPN
 from aioquic.asyncio.client import connect
 from aioquic.quic.configuration import QuicConfiguration
 from http3_base import HttpClient, prepare_response, perform_http_request
+from urllib.parse import urlparse
 
 class HTTP3Response:
     def __init__(self, input) -> None:
-        headers, content = input
+        headers, content, url, redirect = input
         self.content = content
         try:
             self.text = content.decode()
@@ -20,6 +21,7 @@ class HTTP3Response:
             self.headers[k.decode()] = v.decode()
         try:
             self.status_code = int(headers[b":status"])
+            self.url = url
         except:
             print("Status code not included as header, defaulting to 200")
             self.status_code = 200
@@ -37,7 +39,7 @@ async def main(address, headers={}):
 
         events = await perform_http_request(client=client, url=address, headers=headers)
 
-        return HTTP3Response(prepare_response(events))
+        return prepare_response(events)
 
 def get(url, headers={}, params={}):
     plist = []
@@ -50,5 +52,22 @@ def get(url, headers={}, params={}):
     else:
         pstring = ""
     #print(url+pstring)
-    loop = asyncio.new_event_loop()
-    return loop.run_until_complete(main(url+pstring, headers=headers))
+    redirect = False
+    url = url+pstring
+    while True:
+        #print(url)
+        loop = asyncio.new_event_loop()
+        oheaders, ocontent = loop.run_until_complete(main(url, headers=headers))
+        statuscode = int(oheaders[b":status"])
+        if statuscode >= 300 and statuscode < 400 and b"location" in oheaders.keys():
+            #print("Redirection")
+            redirect = True
+            origurl = url
+            parsedorig = urlparse(origurl)
+            url = oheaders[b"location"].decode()
+            parsednew = urlparse(url)
+            if not parsednew.scheme and not parsednew.netloc:
+                url = parsedorig.scheme + "://" + parsedorig.netloc + url
+        else:
+            break
+    return HTTP3Response((oheaders, ocontent, url+pstring, redirect))
