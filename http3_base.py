@@ -1,3 +1,5 @@
+# This file based on: https://github.com/aiortc/aioquic/blob/919ccec9836bf5fa4329b5b050604b09f71d0bdc/examples/http3_client.py
+
 import asyncio
 import logging
 import time
