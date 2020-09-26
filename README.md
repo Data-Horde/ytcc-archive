@@ -6,6 +6,12 @@ Worker for the `Save Community Captions` project: Archiving unpublished YouTube 
 
 [Lost? Click here to learn what this is all about!](https://github.com/Data-Horde/ytcc-archive/wiki/General-Information)
 
+## Current Stats
+See how much has been archived so far.
+
+* https://atdash.meo.ws/d/attv2/archive-team-tracker-charts-v2?orgId=1&var-project=ext-yt-communitycontribs 
+* https://tracker.archiveteam.org/ext-yt-communitycontribs/
+
 ## Setup
 
 To run these tools you will need to supply session cookies (SSID,HSID,SID) [see the
@@ -41,9 +47,3 @@ Simply run `python3 exporter.py` followed by a list of space-separated YouTube v
 
 ### Discover Videos Manually
 Simply run `python3 discovery.py` followed by a list of space-separated YouTube video IDs and a list of discovered video, channel and playlist IDs will be printed, as well as whether caption contributions are enabled.
-
-# Stats
-See how much has been archived so far.
-
-* https://atdash.meo.ws/d/attv2/archive-team-tracker-charts-v2?orgId=1&var-project=ext-yt-communitycontribs 
-* https://tracker.archiveteam.org/ext-yt-communitycontribs/
