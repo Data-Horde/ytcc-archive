@@ -1,5 +1,6 @@
 # YouTube Community Contributions Archiving Worker
-![Discord](https://img.shields.io/discord/755014354734153818?style=plastic)
+
+<a href="https://discord.gg/7QxcBvw"><img alt="Discord" src="https://img.shields.io/discord/755014354734153818?style=plastic"></a>
   
 Worker for the `Save Community Captions` project: Archiving unpublished YouTube community-contributions. 
 
