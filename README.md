@@ -43,7 +43,7 @@ docker container run --restart=unless-stopped --network=host -d --tmpfs /grab/ou
 ```
 ## Bonus Features
 ### Export Captions and Titles/Descriptions Manually
-Simply run `python3 exporter.py` followed by a list of space-separated YouTube video IDs, and all community-contributed captioning and titles/descriptions in all languages will be exported.
+This feature requires an [older version of `export.py`](https://github.com/Data-Horde/ytcc-archive/blob/4bbffa6dc3469832609b6e56ae926dcdf7e729ac/export.py). Get this file, Python 3, and the `requests` module (`pip install requests`). Then, simply run `python3 exporter.py` followed by a list of space-separated YouTube video IDs, and all community-contributed captioning and titles/descriptions in all languages will be exported.
 
 ### Discover Videos Manually
 Simply run `python3 discovery.py` followed by a list of space-separated YouTube video IDs and a list of discovered video, channel and playlist IDs will be printed, as well as whether caption contributions are enabled.
