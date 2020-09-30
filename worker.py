@@ -311,6 +311,7 @@ for x in threads:
     del x
 
 if not shouldgetjob:
+    print("PROTECTION MECHANISM #3 WAS SOMEHOW TRIGERRED")
     print("Community Contribution discovery has been disabled for this account, please report this on our Discord as this may have caused some videos to be incorrectly marked as having community contributions disabled.")
 
 print("Exiting...")
