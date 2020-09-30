@@ -160,7 +160,7 @@ def threadrunner():
                 for playldisc in info[5]:
                     jobs.put(("submitdiscovery", playldisc, tracker.ItemType.Playlist))
                 
-                jobs.put(("complete", None, "video:"+vid))
+                #jobs.put(("complete", None, "video:"+vid))
                 #pass
 
             elif task == "subtitles":
