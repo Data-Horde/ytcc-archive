@@ -171,7 +171,7 @@ def threadrunner():
                 subprrun(mysession, args, vid, "forceedit-metadata", needforcemetadata, needforcecaptions)
             elif task == "channel":
                 try:
-                    y = ydl.extract_info("https://www.youtube.com/channel/"+desit.split(":", 1)[1], download=False)
+                    #y = ydl.extract_info("https://www.youtube.com/channel/"+desit.split(":", 1)[1], download=False)
                     #for itemyv in y["entries"]:
                     #    jobs.put(("submitdiscovery", itemyv["id"], tracker.ItemType.Video))
                     jobs.put(("complete", None, "channel:"+args))
@@ -179,7 +179,7 @@ def threadrunner():
                     print("YouTube-DL error, ignoring but not marking as complete...", "https://www.youtube.com/channel/"+desit.split(":", 1)[1])
             elif task == "playlist":
                 try:
-                    y = ydl.extract_info("https://www.youtube.com/playlist?list="+desit.split(":", 1)[1], download=False)
+                    #y = ydl.extract_info("https://www.youtube.com/playlist?list="+desit.split(":", 1)[1], download=False)
                     #for itemyvp in y["entries"]:
                     #    jobs.put(("submitdiscovery", itemyvp["id"], tracker.ItemType.Video))
                     jobs.put(("complete", None, "playlist:"+args))
