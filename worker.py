@@ -122,7 +122,6 @@ def threadrunner():
             task, vid, args = jobs.get()
             if task == "submitdiscovery":
                 #tracker.add_item_to_tracker(args, vid)
-                #jobs.put(("complete", None, "video:"+vid))
                 pass
             elif task == "discovery":
                 """
@@ -173,16 +172,16 @@ def threadrunner():
             elif task == "channel":
                 try:
                     y = ydl.extract_info("https://www.youtube.com/channel/"+desit.split(":", 1)[1], download=False)
-                    for itemyv in y["entries"]:
-                        jobs.put(("submitdiscovery", itemyv["id"], tracker.ItemType.Video))
+                    #for itemyv in y["entries"]:
+                    #    jobs.put(("submitdiscovery", itemyv["id"], tracker.ItemType.Video))
                     jobs.put(("complete", None, "channel:"+args))
                 except:
                     print("YouTube-DL error, ignoring but not marking as complete...", "https://www.youtube.com/channel/"+desit.split(":", 1)[1])
             elif task == "playlist":
                 try:
                     y = ydl.extract_info("https://www.youtube.com/playlist?list="+desit.split(":", 1)[1], download=False)
-                    for itemyvp in y["entries"]:
-                        jobs.put(("submitdiscovery", itemyvp["id"], tracker.ItemType.Video))
+                    #for itemyvp in y["entries"]:
+                    #    jobs.put(("submitdiscovery", itemyvp["id"], tracker.ItemType.Video))
                     jobs.put(("complete", None, "playlist:"+args))
                 except:
                     print("YouTube-DL error, ignoring but not marking as complete...", "https://www.youtube.com/playlist?list="+desit.split(":", 1)[1])
