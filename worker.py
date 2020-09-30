@@ -236,6 +236,8 @@ def threadrunner():
                 # get a new task from tracker
                 collect() #cleanup
 
+                #Protection Mechanism Disarmed
+                """
                 #check that the account has community contributions enabled every 50th item
                 validationtimes += 1
                 if not validationtimes % 50:
@@ -245,6 +247,7 @@ def threadrunner():
                         shouldgetjob = False
                         gkiller.kill_now = True #exit the script
                     del enres
+                """
 
                 if shouldgetjob:
                     desit = tracker.request_item_from_tracker()
