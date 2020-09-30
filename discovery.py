@@ -29,7 +29,19 @@ def getmetadata(mysession, vid, ccenabledonly=False):
     recmixes = set()
     recplayl = set()
 
-    ccenabled = False #default values
+    pparams = (
+                ("v", vid),
+                #("lang", langcode),
+                ("action_mde_edit_form", 1),
+                ("bl", "vmp"),
+                ("ui", "hd"),
+                ("tab", "captions"),
+                #('forceedit', 'captions'),
+                ("lang","en")
+            )
+    mysession.headers.update({"cookie": "HSID="+cookies["HSID"]+"; SSID="+cookies["SSID"]+"; SID="+cookies["SID"], "Accept-Language": "en-US",})
+    ccenabled = not "yet enabled community" in mysession.get("https://www.youtube.com/timedtext_editor", params=pparams).text
+    #print(mysession.get("https://www.youtube.com/timedtext_editor", params=pparams).text)
     creditdata = {}
 
     for line in wptext.splitlines():
@@ -63,10 +75,12 @@ def getmetadata(mysession, vid, ccenabledonly=False):
                                         recvids.add(elint["endpoint"]["watchEndpoint"]["videoId"])
                                         recplayl.add(elint["endpoint"]["watchEndpint"]["playlistId"])
 
+            """
             if "captions" in initplay.keys():
                 ccenabled = "contribute" in initplay["captions"]["playerCaptionsRenderer"]
             else:
                 ccenabled = False # if captions information is not present, community contributions are not enabled
+            """
 
             if not ccenabledonly:
                 if "videoDetails" in initplay.keys():
