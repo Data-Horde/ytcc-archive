@@ -39,7 +39,7 @@ def getmetadata(mysession, vid, ccenabledonly=False):
                 #('forceedit', 'captions'),
                 ("lang","aa")
             )
-    mysession.headers.update({"cookie": "HSID="+cookies["HSID"]+"; SSID="+cookies["SSID"]+"; SID="+cookies["SID"], "Accept-Language": "en-US",})
+    #mysession.headers.update({"cookie": "HSID="+cookies["HSID"]+"; SSID="+cookies["SSID"]+"; SID="+cookies["SID"], "Accept-Language": "en-US",})
     ccenabled = not "yet enabled community" in mysession.get("https://www.youtube.com/timedtext_editor", params=pparams).text
     #print(mysession.get("https://www.youtube.com/timedtext_editor", params=pparams).text)
     creditdata = {}
