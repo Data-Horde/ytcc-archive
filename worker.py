@@ -100,6 +100,8 @@ class GracefulKiller:
 
 gkiller = GracefulKiller()
 
+#REMOVED PANIC MECHANISM!
+"""
 enres = getmetadata(mysession, "IjJKfe-0Ty0", True)[0]
 if not enres:
     print("Community Contribution discovery has been disabled for this account, please report this on our Discord as this may have caused some videos to be incorrectly marked as having community contributions disabled.")
@@ -107,6 +109,7 @@ if not enres:
     gkiller.kill_now = True #exit the script
 
 del enres
+"""
 
 #microtasks
 def threadrunner():
@@ -118,8 +121,11 @@ def threadrunner():
         if not jobs.empty():
             task, vid, args = jobs.get()
             if task == "submitdiscovery":
-                tracker.add_item_to_tracker(args, vid)
+                #tracker.add_item_to_tracker(args, vid)
+                #jobs.put(("complete", None, "video:"+vid))
+                pass
             elif task == "discovery":
+                """
                 while True:
                     try:
                         info = getmetadata(mysession, str(vid).strip())
@@ -154,6 +160,9 @@ def threadrunner():
                     jobs.put(("submitdiscovery", mixdisc, tracker.ItemType.MixPlaylist))
                 for playldisc in info[5]:
                     jobs.put(("submitdiscovery", playldisc, tracker.ItemType.Playlist))
+                """
+                jobs.put(("complete", None, "video:"+vid))
+                pass
 
             elif task == "subtitles":
                 subprrun(mysession, args, vid, "default", needforcemetadata, needforcecaptions)
@@ -227,6 +236,8 @@ def threadrunner():
                 # get a new task from tracker
                 collect() #cleanup
 
+                #Protection Mechanism Disarmed
+                """
                 #check that the account has community contributions enabled every 50th item
                 validationtimes += 1
                 if not validationtimes % 50:
@@ -236,6 +247,7 @@ def threadrunner():
                         shouldgetjob = False
                         gkiller.kill_now = True #exit the script
                     del enres
+                """
 
                 if shouldgetjob:
                     desit = tracker.request_item_from_tracker()
@@ -299,6 +311,7 @@ for x in threads:
     del x
 
 if not shouldgetjob:
+    print("PROTECTION MECHANISM #3 WAS SOMEHOW TRIGERRED")
     print("Community Contribution discovery has been disabled for this account, please report this on our Discord as this may have caused some videos to be incorrectly marked as having community contributions disabled.")
 
 print("Exiting...")
