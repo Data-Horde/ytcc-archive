@@ -121,10 +121,10 @@ def threadrunner():
         if not jobs.empty():
             task, vid, args = jobs.get()
             if task == "submitdiscovery":
-                #tracker.add_item_to_tracker(args, vid)
-                pass
+                tracker.add_item_to_tracker(args, vid)
+                #pass
             elif task == "discovery":
-                """
+                
                 while True:
                     try:
                         info = getmetadata(mysession, str(vid).strip())
@@ -159,9 +159,9 @@ def threadrunner():
                     jobs.put(("submitdiscovery", mixdisc, tracker.ItemType.MixPlaylist))
                 for playldisc in info[5]:
                     jobs.put(("submitdiscovery", playldisc, tracker.ItemType.Playlist))
-                """
+                
                 jobs.put(("complete", None, "video:"+vid))
-                pass
+                #pass
 
             elif task == "subtitles":
                 subprrun(mysession, args, vid, "default", needforcemetadata, needforcecaptions)
@@ -171,17 +171,17 @@ def threadrunner():
                 subprrun(mysession, args, vid, "forceedit-metadata", needforcemetadata, needforcecaptions)
             elif task == "channel":
                 try:
-                    #y = ydl.extract_info("https://www.youtube.com/channel/"+desit.split(":", 1)[1], download=False)
-                    #for itemyv in y["entries"]:
-                    #    jobs.put(("submitdiscovery", itemyv["id"], tracker.ItemType.Video))
+                    y = ydl.extract_info("https://www.youtube.com/channel/"+desit.split(":", 1)[1], download=False)
+                    for itemyv in y["entries"]:
+                        jobs.put(("submitdiscovery", itemyv["id"], tracker.ItemType.Video))
                     jobs.put(("complete", None, "channel:"+args))
                 except:
                     print("YouTube-DL error, ignoring but not marking as complete...", "https://www.youtube.com/channel/"+desit.split(":", 1)[1])
             elif task == "playlist":
                 try:
-                    #y = ydl.extract_info("https://www.youtube.com/playlist?list="+desit.split(":", 1)[1], download=False)
-                    #for itemyvp in y["entries"]:
-                    #    jobs.put(("submitdiscovery", itemyvp["id"], tracker.ItemType.Video))
+                    y = ydl.extract_info("https://www.youtube.com/playlist?list="+desit.split(":", 1)[1], download=False)
+                    for itemyvp in y["entries"]:
+                        jobs.put(("submitdiscovery", itemyvp["id"], tracker.ItemType.Video))
                     jobs.put(("complete", None, "playlist:"+args))
                 except:
                     print("YouTube-DL error, ignoring but not marking as complete...", "https://www.youtube.com/playlist?list="+desit.split(":", 1)[1])
