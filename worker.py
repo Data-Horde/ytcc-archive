@@ -174,17 +174,42 @@ def threadrunner():
                     y = ydl.extract_info("https://www.youtube.com/channel/"+desit.split(":", 1)[1], download=False)
                     for itemyv in y["entries"]:
                         jobs.put(("submitdiscovery", itemyv["id"], tracker.ItemType.Video))
+
+                    #channel created playlists
+                    y = ydl.extract_info("https://www.youtube.com/channel/"+desit.split(":", 1)[1]+"/playlists?view=1", download=False)
+                    for itemyv in y["entries"]:
+                        jobs.put(("submitdiscovery", itemyv["url"].split("?list=", 1)[1], tracker.ItemType.Playlist)) #[38:]
+                    #TODO: saved playlists, featured channels
                     jobs.put(("complete", None, "channel:"+args))
                 except:
                     print("YouTube-DL error, ignoring but not marking as complete...", "https://www.youtube.com/channel/"+desit.split(":", 1)[1])
             elif task == "playlist":
                 try:
                     y = ydl.extract_info("https://www.youtube.com/playlist?list="+desit.split(":", 1)[1], download=False)
+                    #TODO: extract owner channel in other projects
+                    #TODO: handle channels in other projects, not needed here because we will get it from the video
                     for itemyvp in y["entries"]:
                         jobs.put(("submitdiscovery", itemyvp["id"], tracker.ItemType.Video))
                     jobs.put(("complete", None, "playlist:"+args))
                 except:
                     print("YouTube-DL error, ignoring but not marking as complete...", "https://www.youtube.com/playlist?list="+desit.split(":", 1)[1])
+            elif task == "mixplaylist":
+                try:
+                    wptext = mysession.get("https://www.youtube.com/watch?v=jNQXAC9IVRw&list="+desit.split(":", 1)[1]).text
+                    #chanl = set()
+                    #channel handling not needed here because we will get it from the video
+                    for line in wptext.splitlines():
+                        if line.strip().startswith('window["ytInitialData"] = '):
+                            initdata = loads(line.split('window["ytInitialData"] = ', 1)[1].strip()[:-1])
+                            for itemyvp in initdata["contents"]["twoColumnWatchNextResults"]["playlist"]["playlist"]["contents"]:
+                                jobs.put(("submitdiscovery", itemyvp["playlistPanelVideoRenderer"]["videoId"], tracker.ItemType.Video))
+                                #chanl.add(itemyvp["playlistPanelVideoRenderer"]["longBylineText"]["runs"][0]["navigationEndpoint"]["browseEndpoint"]["browseId"])
+                                
+                    #for itemn in chanl:
+                    #    jobs.put(("submitdiscovery", itemn, tracker.ItemType.Channel))
+                    jobs.put(("complete", None, "mixplaylist:"+args))
+                except:
+                    print("Mix Playlist error, ignoring but not marking as complete...", "https://www.youtube.com/watch?v=jNQXAC9IVRw&list="+desit.split(":", 1)[1])
             elif task == "complete":
                 size = 0
                 if ":" in args:
@@ -281,6 +306,8 @@ def threadrunner():
                             jobs.put(("channel", None, desit.split(":", 1)[1]))
                         elif desit.split(":", 1)[0] == "playlist":
                             jobs.put(("playlist", None, desit.split(":", 1)[1]))
+                        elif desit.split(":", 1)[0] == "mixplaylist":
+                            jobs.put(("mixplaylist", None, desit.split(":", 1)[1]))
                         else:
                             print("Ignoring item for now", desit)
                     else:
