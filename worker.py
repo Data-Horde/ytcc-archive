@@ -5,6 +5,8 @@ from os import mkdir, rmdir, listdir, system, environ
 from os.path import isdir, isfile, getsize
 from json import dumps, loads
 
+from youtube_channel import main
+
 import signal
 
 import tracker
@@ -176,10 +178,12 @@ def threadrunner():
                         jobs.put(("submitdiscovery", itemyv["id"], tracker.ItemType.Video))
 
                     #channel created playlists
-                    y = ydl.extract_info("https://www.youtube.com/channel/"+desit.split(":", 1)[1]+"/playlists?view=1", download=False)
-                    for itemyv in y["entries"]:
-                        jobs.put(("submitdiscovery", itemyv["url"].split("?list=", 1)[1], tracker.ItemType.Playlist)) #[38:]
-                    #TODO: saved playlists, featured channels
+                    y = main(desit.split(":", 1)[1])
+                    for itemyv in y["playlists"]:
+                        jobs.put(("submitdiscovery", itemyv, tracker.ItemType.Playlist))
+                    for itemyv in y["channels"]:
+                        jobs.put(("submitdiscovery", itemyv, tracker.ItemType.Channel))
+
                     jobs.put(("complete", None, "channel:"+args))
                 except:
                     print("YouTube-DL error, ignoring but not marking as complete...", "https://www.youtube.com/channel/"+desit.split(":", 1)[1])
