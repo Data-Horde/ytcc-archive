@@ -135,11 +135,9 @@ def threadrunner():
                         print(e)
                         print("Error in retrieving information, waiting 30 seconds and trying again")
                         sleep(30)
-                if info[0] or info[1]: # ccenabled or creditdata
+                if info[0]: # ccenabled or creditdata
                     if not isdir("out/"+str(vid).strip()):
                         mkdir("out/"+str(vid).strip())
-                if info[1]:
-                    open("out/"+str(vid).strip()+"/"+str(vid).strip()+"_published_credits.json", "w").write(dumps(info[1]))
 
                 if info[0]:
                     for langcode in langs:
@@ -153,13 +151,13 @@ def threadrunner():
 
                 jobs.put(("complete", None, "video:"+vid))
 
-                for videodisc in info[2]:
+                for videodisc in info[1]:
                     jobs.put(("submitdiscovery", videodisc, tracker.ItemType.Video))
-                for channeldisc in info[3]:
+                for channeldisc in info[2]:
                     jobs.put(("submitdiscovery", channeldisc, tracker.ItemType.Channel))
-                for mixdisc in info[4]:
+                for mixdisc in info[3]:
                     jobs.put(("submitdiscovery", mixdisc, tracker.ItemType.MixPlaylist))
-                for playldisc in info[5]:
+                for playldisc in info[4]:
                     jobs.put(("submitdiscovery", playldisc, tracker.ItemType.Playlist))
                 
                 #jobs.put(("complete", None, "video:"+vid))
