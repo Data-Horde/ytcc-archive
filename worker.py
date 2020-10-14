@@ -135,7 +135,7 @@ def threadrunner():
                         print(e)
                         print("Error in retrieving information, waiting 30 seconds and trying again")
                         sleep(30)
-                if info[0]: # ccenabled or creditdata
+                if info[0]: # ccenabled
                     if not isdir("out/"+str(vid).strip()):
                         mkdir("out/"+str(vid).strip())
 
