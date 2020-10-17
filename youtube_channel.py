@@ -1,5 +1,6 @@
 from requests import session
 from youtube_util import getinitialdata, fullyexpand, getapikey, getlver
+from time import sleep
 
 mysession = session()
 #extract latest version automatically
@@ -24,7 +25,14 @@ def process_channel(channelid: str):
 
     # PLAYLISTS
     data = {"context":{"client":{"hl":"en","gl":"US","clientName":"WEB","clientVersion":API_VERSION}},"browseId":channelid,"params":"EglwbGF5bGlzdHM%3D"}
-    initdata = mysession.post("https://www.youtube.com/youtubei/v1/browse", params=params, json=data).json()
+    while True:
+        initdata = mysession.post("https://www.youtube.com/youtubei/v1/browse", params=params, json=data)
+        if initdata.status_code == 200:
+            initdata = initdata.json()
+            break
+        else:
+            print("Non-200 API status code, waiting 30 seconds before retrying...")
+            sleep(30)
 
 
     CHANNELS_ID = 0
@@ -67,10 +75,17 @@ def process_channel(channelid: str):
     # CHANNELS
     cshelfres = set()
 
-        # PLAYLISTS
+    # PLAYLISTS
     data = {"context":{"client":{"hl":"en","gl":"US","clientName":"WEB","clientVersion":API_VERSION}},"browseId":channelid,"params":"EghjaGFubmVscw%3D%3D"}
-    initdata = mysession.post("https://www.youtube.com/youtubei/v1/browse", params=params, json=data).json()
-
+    while True:
+        initdata = mysession.post("https://www.youtube.com/youtubei/v1/browse", params=params, json=data).json()
+        if initdata.status_code == 200:
+            initdata = initdata.json()
+            break
+        else:
+            print("Non-200 API status code, waiting 30 seconds before retrying...")
+            sleep(30)
+            
     shelflist = initdata["contents"]["twoColumnBrowseResultsRenderer"]["tabs"][CHANNELS_ID]["tabRenderer"]["content"]["sectionListRenderer"]["contents"]
 
     for item in shelflist:
