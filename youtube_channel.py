@@ -88,7 +88,7 @@ def process_channel(channelid: str):
     # PLAYLISTS
     data = {"context":{"client":{"hl":"en","gl":"US","clientName":"WEB","clientVersion":API_VERSION}},"browseId":channelid,"params":"EghjaGFubmVscw%3D%3D"}
     while True:
-        initdata = mysession.post("https://www.youtube.com/youtubei/v1/browse", params=params, json=data).json()
+        initdata = mysession.post("https://www.youtube.com/youtubei/v1/browse", params=params, json=data)
         if initdata.status_code == 200:
             initdata = initdata.json()
             break
