@@ -68,7 +68,7 @@ def process_channel(channelid: str):
             shelfintp = mysession.get("https://www.youtube.com/"+str(item))
             if not """</div><div id="content" class="  content-alignment" role="main"><p class='largeText'>Sorry for the interruption. We have been receiving a large volume of requests from your network.</p>
 
-<p>To continue with your YouTube experience, please fill out the form below.</p>""" in shelfintp.text and not shelfintp.status_code == 200:
+<p>To continue with your YouTube experience, please fill out the form below.</p>""" in shelfintp.text and shelfintp.status_code == 200:
                 break
             else:
                 print("Non-200 status code, waiting 30 seconds before retrying...")
@@ -113,7 +113,7 @@ def process_channel(channelid: str):
             shelfintc = mysession.get("https://www.youtube.com/"+str(item))
             if not """</div><div id="content" class="  content-alignment" role="main"><p class='largeText'>Sorry for the interruption. We have been receiving a large volume of requests from your network.</p>
 
-<p>To continue with your YouTube experience, please fill out the form below.</p>""" in shelfintc.text and not shelfintc.status_code == 200:
+<p>To continue with your YouTube experience, please fill out the form below.</p>""" in shelfintc.text and shelfintc.status_code == 200:
                 break
             else:
                 print("Non-200 status code, waiting 30 seconds before retrying...")
