@@ -5,7 +5,7 @@ from os import mkdir, rmdir, listdir, system, environ
 from os.path import isdir, isfile, getsize
 from json import loads
 
-from youtube_channel import main
+from youtube_channel import process_channel
 
 import signal
 
@@ -159,7 +159,7 @@ def threadrunner():
                         jobs.put(("submitdiscovery", itemyv["id"], tracker.ItemType.Video))
 
                     #channel created playlists
-                    y = main(desit.split(":", 1)[1])
+                    y = process_channel(desit.split(":", 1)[1])
                     for itemyv in y["playlists"]:
                         jobs.put(("submitdiscovery", itemyv, tracker.ItemType.Playlist))
                     for itemyv in y["channels"]:
