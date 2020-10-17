@@ -219,10 +219,17 @@ def threadrunner():
                                         print("Waiting 5 minutes...")
                                         sleep(300)
 
-                                if targetloc.startswith("rsync"):
-                                    system("rsync -rltv --timeout=300 --contimeout=300 --progress --bwlimit 0 --recursive --partial --partial-dir .rsync-tmp --min-size 1 --no-compress --compress-level 0 directory/"+args.split(":", 1)[1]+"/ "+targetloc)
-                                elif targetloc.startswith("http"):
-                                    system("curl -F "+args.split(":", 1)[1]+".zip=@directory/"+args.split(":", 1)[1]+"/"+args.split(":", 1)[1]+".zip "+targetloc)
+                                while True:
+                                    if targetloc.startswith("rsync"):
+                                        exitinfo = system("rsync -rltv --timeout=300 --contimeout=300 --progress --bwlimit 0 --recursive --partial --partial-dir .rsync-tmp --min-size 1 --no-compress --compress-level 0 directory/"+args.split(":", 1)[1]+"/ "+targetloc)
+                                    elif targetloc.startswith("http"):
+                                        exitinfo = system("curl -F "+args.split(":", 1)[1]+".zip=@directory/"+args.split(":", 1)[1]+"/"+args.split(":", 1)[1]+".zip "+targetloc)
+
+                                    if exitinfo == 0: # note that on Unix this isn't necessarily the exit code but it's still 0 upon successful exit
+                                        break
+                                    else:
+                                        print("Error in sending data to target, waiting 30 seconds and trying again.")
+                                        sleep(30)
 
 
                                 size = getsize("directory/"+args.split(":", 1)[1]+"/"+args.split(":", 1)[1]+".zip")
