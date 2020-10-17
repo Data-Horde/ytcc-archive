@@ -18,7 +18,7 @@ def getlver(initialdata: dict):
     try:
         return initialdata["responseContext"]["serviceTrackingParams"][2]["params"][2]["value"]
     except:
-        return "2.20201002.02.01"
+        return "2.20201016.02.00"
 
 def fullyexpand(inputdict: dict, mysession: requests.session, continuationheaders: dict):
     lastrequestj = inputdict
