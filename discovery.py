@@ -123,34 +123,11 @@ def getmetadata(mysession, vid, ccenabledonly=False):
                     except BaseException as e:
                         print(e)
                         print("Exception in discovery, continuing anyway")
-
-            creditdata = {}
-
-            if not ccenabledonly:
-                try:
-                    mdinfo = initdata["contents"]["twoColumnWatchNextResults"]["results"]["results"]["contents"][1]["videoSecondaryInfoRenderer"]["metadataRowContainer"]["metadataRowContainerRenderer"]["rows"]
-                    for item in mdinfo:
-                        if item["metadataRowRenderer"]["title"]["simpleText"].startswith("Caption author"): #the request to /watch needs to be in English for this to work
-                            try:
-                                desl = langcodes[item["metadataRowRenderer"]["title"]["simpleText"].split("(", 1)[1][:-1]]
-                            except KeyError as e:
-                                #print(e)
-                                print("Language code conversion error, using language name")
-                                desl = item["metadataRowRenderer"]["title"]["simpleText"].split("(", 1)[1][:-1]
-                            creditdata[desl] = []
-                            for itemint in item["metadataRowRenderer"]["contents"]:
-                                creditdata[desl].append({"name": itemint["runs"][0]["text"], "channel": itemint["runs"][0]["navigationEndpoint"]["browseEndpoint"]["browseId"]})
-
-                except KeyError as e:
-                    #print("Video does not have credits")
-                    pass
-                    #raise
-                    #print(e)
         
         if initplay and (initdata or ccenabledonly):
             break
 
-    return ccenabled, creditdata, recvids, recchans, recmixes, recplayl
+    return ccenabled, recvids, recchans, recmixes, recplayl
 
 if __name__ == "__main__":
     from sys import argv

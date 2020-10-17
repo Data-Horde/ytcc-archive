@@ -3,9 +3,9 @@ import requests
 from time import sleep
 from os import mkdir, rmdir, listdir, system, environ
 from os.path import isdir, isfile, getsize
-from json import dumps, loads
+from json import loads
 
-from youtube_channel import main
+from youtube_channel import process_channel
 
 import signal
 
@@ -87,7 +87,6 @@ open("cookies.txt", "w").write("""# HTTP Cookie File
 del cookies
 
 validationtimes = 0
-shouldgetjob = True
 
 #Graceful Shutdown
 class GracefulKiller:
@@ -102,20 +101,8 @@ class GracefulKiller:
 
 gkiller = GracefulKiller()
 
-#REMOVED PANIC MECHANISM!
-"""
-enres = getmetadata(mysession, "IjJKfe-0Ty0", True)[0]
-if not enres:
-    print("Community Contribution discovery has been disabled for this account, please report this on our Discord as this may have caused some videos to be incorrectly marked as having community contributions disabled.")
-    shouldgetjob = False
-    gkiller.kill_now = True #exit the script
-
-del enres
-"""
-
 #microtasks
 def threadrunner():
-    global shouldgetjob
     global validationtimes
     jobs = Queue()
     ydl = YoutubeDL({"extract_flat": "in_playlist", "simulate": True, "skip_download": True, "quiet": True, "cookiefile": "cookies.txt", "source_address": "0.0.0.0", "call_home": False})
@@ -124,7 +111,6 @@ def threadrunner():
             task, vid, args = jobs.get()
             if task == "submitdiscovery":
                 tracker.add_item_to_tracker(args, vid)
-                #pass
             elif task == "discovery":
                 
                 while True:
@@ -135,11 +121,9 @@ def threadrunner():
                         print(e)
                         print("Error in retrieving information, waiting 30 seconds and trying again")
                         sleep(30)
-                if info[0] or info[1]: # ccenabled or creditdata
+                if info[0]: # ccenabled
                     if not isdir("out/"+str(vid).strip()):
                         mkdir("out/"+str(vid).strip())
-                if info[1]:
-                    open("out/"+str(vid).strip()+"/"+str(vid).strip()+"_published_credits.json", "w").write(dumps(info[1]))
 
                 if info[0]:
                     for langcode in langs:
@@ -153,17 +137,14 @@ def threadrunner():
 
                 jobs.put(("complete", None, "video:"+vid))
 
-                for videodisc in info[2]:
+                for videodisc in info[1]:
                     jobs.put(("submitdiscovery", videodisc, tracker.ItemType.Video))
-                for channeldisc in info[3]:
+                for channeldisc in info[2]:
                     jobs.put(("submitdiscovery", channeldisc, tracker.ItemType.Channel))
-                for mixdisc in info[4]:
+                for mixdisc in info[3]:
                     jobs.put(("submitdiscovery", mixdisc, tracker.ItemType.MixPlaylist))
-                for playldisc in info[5]:
+                for playldisc in info[4]:
                     jobs.put(("submitdiscovery", playldisc, tracker.ItemType.Playlist))
-                
-                #jobs.put(("complete", None, "video:"+vid))
-                #pass
 
             elif task == "subtitles":
                 subprrun(mysession, args, vid, "default", needforcemetadata, needforcecaptions)
@@ -178,7 +159,7 @@ def threadrunner():
                         jobs.put(("submitdiscovery", itemyv["id"], tracker.ItemType.Video))
 
                     #channel created playlists
-                    y = main(desit.split(":", 1)[1])
+                    y = process_channel(desit.split(":", 1)[1])
                     for itemyv in y["playlists"]:
                         jobs.put(("submitdiscovery", itemyv, tracker.ItemType.Playlist))
                     for itemyv in y["channels"]:
@@ -200,17 +181,14 @@ def threadrunner():
             elif task == "mixplaylist":
                 try:
                     wptext = mysession.get("https://www.youtube.com/watch?v=jNQXAC9IVRw&list="+desit.split(":", 1)[1]).text
-                    #chanl = set()
+
                     #channel handling not needed here because we will get it from the video
                     for line in wptext.splitlines():
                         if line.strip().startswith('window["ytInitialData"] = '):
                             initdata = loads(line.split('window["ytInitialData"] = ', 1)[1].strip()[:-1])
                             for itemyvp in initdata["contents"]["twoColumnWatchNextResults"]["playlist"]["playlist"]["contents"]:
                                 jobs.put(("submitdiscovery", itemyvp["playlistPanelVideoRenderer"]["videoId"], tracker.ItemType.Video))
-                                #chanl.add(itemyvp["playlistPanelVideoRenderer"]["longBylineText"]["runs"][0]["navigationEndpoint"]["browseEndpoint"]["browseId"])
-                                
-                    #for itemn in chanl:
-                    #    jobs.put(("submitdiscovery", itemn, tracker.ItemType.Channel))
+
                     jobs.put(("complete", None, "mixplaylist:"+args))
                 except:
                     print("Mix Playlist error, ignoring but not marking as complete...", "https://www.youtube.com/watch?v=jNQXAC9IVRw&list="+desit.split(":", 1)[1])
@@ -241,10 +219,17 @@ def threadrunner():
                                         print("Waiting 5 minutes...")
                                         sleep(300)
 
-                                if targetloc.startswith("rsync"):
-                                    system("rsync -rltv --timeout=300 --contimeout=300 --progress --bwlimit 0 --recursive --partial --partial-dir .rsync-tmp --min-size 1 --no-compress --compress-level 0 directory/"+args.split(":", 1)[1]+"/ "+targetloc)
-                                elif targetloc.startswith("http"):
-                                    system("curl -F "+args.split(":", 1)[1]+".zip=@directory/"+args.split(":", 1)[1]+"/"+args.split(":", 1)[1]+".zip "+targetloc)
+                                while True:
+                                    if targetloc.startswith("rsync"):
+                                        exitinfo = system("rsync -rltv --timeout=300 --contimeout=300 --progress --bwlimit 0 --recursive --partial --partial-dir .rsync-tmp --min-size 1 --no-compress --compress-level 0 directory/"+args.split(":", 1)[1]+"/ "+targetloc)
+                                    elif targetloc.startswith("http"):
+                                        exitinfo = system("curl -F "+args.split(":", 1)[1]+".zip=@directory/"+args.split(":", 1)[1]+"/"+args.split(":", 1)[1]+".zip "+targetloc)
+
+                                    if exitinfo == 0: # note that on Unix this isn't necessarily the exit code but it's still 0 upon successful exit
+                                        break
+                                    else:
+                                        print("Error in sending data to target, waiting 30 seconds and trying again.")
+                                        sleep(30)
 
 
                                 size = getsize("directory/"+args.split(":", 1)[1]+"/"+args.split(":", 1)[1]+".zip")
@@ -264,60 +249,44 @@ def threadrunner():
                 # get a new task from tracker
                 collect() #cleanup
 
-                #Protection Mechanism Disarmed
-                """
-                #check that the account has community contributions enabled every 50th item
-                validationtimes += 1
-                if not validationtimes % 50:
-                    enres = getmetadata(mysession, "IjJKfe-0Ty0", True)[0]
-                    if not enres:
-                        print("Community Contribution discovery has been disabled for this account, please report this on our Discord as this may have caused some videos to be incorrectly marked as having community contributions disabled.")
-                        shouldgetjob = False
-                        gkiller.kill_now = True #exit the script
-                    del enres
-                """
+                desit = tracker.request_item_from_tracker()
+                print("New task:", desit)
 
-                if shouldgetjob:
-                    desit = tracker.request_item_from_tracker()
-                    print("New task:", desit)
-
-                    if desit:
-                        if desit.split(":", 1)[0] == "video":
-                            needforcemetadata = {'ab': None, 'aa': None, 'af': None, 'sq': None, 'ase': None, 'am': None, 'ar': None, 'arc': None, 'hy': None, 'as': None, 'ay': None, 'az': None, 'bn': None, 'ba': None, 'eu': None, 'be': None, 'bh': None, 'bi': None, 'bs': None, 'br': None, 
-                                'bg': None, 'yue': None, 'yue-HK': None, 'ca': None, 'chr': None, 'zh-CN': None, 'zh-HK': None, 'zh-Hans': None, 'zh-SG': None, 'zh-TW': None, 'zh-Hant': None, 'cho': None, 'co': None, 'hr': None, 'cs': None, 'da': None, 'nl': None, 
-                                'nl-BE': None, 'nl-NL': None, 'dz': None, 'en': None, 'en-CA': None, 'en-IN': None, 'en-IE': None, 'en-GB': None, 'en-US': None, 'eo': None, 'et': None, 'fo': None, 'fj': None, 'fil': None, 'fi': None, 'fr': None, 'fr-BE': None, 
-                                'fr-CA': None, 'fr-FR': None, 'fr-CH': None, 'ff': None, 'gl': None, 'ka': None, 'de': None, 'de-AT': None, 'de-DE': None, 'de-CH': None, 'el': None, 'kl': None, 'gn': None, 'gu': None, 'ht': None, 'hak': None, 'hak-TW': None, 'ha': None, 
-                                'iw': None, 'hi': None, 'hi-Latn': None, 'ho': None, 'hu': None, 'is': None, 'ig': None, 'id': None, 'ia': None, 'ie': None, 'iu': None, 'ik': None, 'ga': None, 'it': None, 'ja': None, 'jv': None, 'kn': None, 'ks': None, 'kk': None, 'km': None, 'rw': None, 
-                                'tlh': None, 'ko': None, 'ku': None, 'ky': None, 'lo': None, 'la': None, 'lv': None, 'ln': None, 'lt': None, 'lb': None, 'mk': None, 'mg': None, 'ms': None, 'ml': None, 'mt': None, 'mni': None, 'mi': None, 'mr': None, 'mas': None, 'nan': None, 
-                                'nan-TW': None, 'lus': None, 'mo': None, 'mn': None, 'my': None, 'na': None, 'nv': None, 'ne': None, 'no': None, 'oc': None, 'or': None, 'om': None, 'ps': None, 'fa': None, 'fa-AF': None, 'fa-IR': None, 'pl': None, 'pt': None, 'pt-BR': None, 
-                                'pt-PT': None, 'pa': None, 'qu': None, 'ro': None, 'rm': None, 'rn': None, 'ru': None, 'ru-Latn': None, 'sm': None, 'sg': None, 'sa': None, 'sc': None, 'gd': None, 'sr': None, 'sr-Cyrl': None, 'sr-Latn': None, 'sh': None, 'sdp': None, 'sn': None, 
-                                'scn': None, 'sd': None, 'si': None, 'sk': None, 'sl': None, 'so': None, 'st': None, 'es': None, 'es-419': None, 'es-MX': None, 'es-ES': None, 'es-US': None, 'su': None, 'sw': None, 'ss': None, 'sv': None, 'tl': None, 'tg': None, 'ta': None, 
-                                'tt': None, 'te': None, 'th': None, 'bo': None, 'ti': None, 'tpi': None, 'to': None, 'ts': None, 'tn': None, 'tr': None, 'tk': None, 'tw': None, 'uk': None, 'ur': None, 'uz': None, 'vi': None, 'vo': None, 'vor': None, 'cy': None, 'fy': None, 'wo': None, 
-                                'xh': None, 'yi': None, 'yo': None, 'zu': None}
-                            needforcecaptions = {'ab': None, 'aa': None, 'af': None, 'sq': None, 'ase': None, 'am': None, 'ar': None, 'arc': None, 'hy': None, 'as': None, 'ay': None, 'az': None, 'bn': None, 'ba': None, 'eu': None, 'be': None, 'bh': None, 'bi': None, 'bs': None, 'br': None, 
-                                'bg': None, 'yue': None, 'yue-HK': None, 'ca': None, 'chr': None, 'zh-CN': None, 'zh-HK': None, 'zh-Hans': None, 'zh-SG': None, 'zh-TW': None, 'zh-Hant': None, 'cho': None, 'co': None, 'hr': None, 'cs': None, 'da': None, 'nl': None, 
-                                'nl-BE': None, 'nl-NL': None, 'dz': None, 'en': None, 'en-CA': None, 'en-IN': None, 'en-IE': None, 'en-GB': None, 'en-US': None, 'eo': None, 'et': None, 'fo': None, 'fj': None, 'fil': None, 'fi': None, 'fr': None, 'fr-BE': None, 
-                                'fr-CA': None, 'fr-FR': None, 'fr-CH': None, 'ff': None, 'gl': None, 'ka': None, 'de': None, 'de-AT': None, 'de-DE': None, 'de-CH': None, 'el': None, 'kl': None, 'gn': None, 'gu': None, 'ht': None, 'hak': None, 'hak-TW': None, 'ha': None, 
-                                'iw': None, 'hi': None, 'hi-Latn': None, 'ho': None, 'hu': None, 'is': None, 'ig': None, 'id': None, 'ia': None, 'ie': None, 'iu': None, 'ik': None, 'ga': None, 'it': None, 'ja': None, 'jv': None, 'kn': None, 'ks': None, 'kk': None, 'km': None, 'rw': None, 
-                                'tlh': None, 'ko': None, 'ku': None, 'ky': None, 'lo': None, 'la': None, 'lv': None, 'ln': None, 'lt': None, 'lb': None, 'mk': None, 'mg': None, 'ms': None, 'ml': None, 'mt': None, 'mni': None, 'mi': None, 'mr': None, 'mas': None, 'nan': None, 
-                                'nan-TW': None, 'lus': None, 'mo': None, 'mn': None, 'my': None, 'na': None, 'nv': None, 'ne': None, 'no': None, 'oc': None, 'or': None, 'om': None, 'ps': None, 'fa': None, 'fa-AF': None, 'fa-IR': None, 'pl': None, 'pt': None, 'pt-BR': None, 
-                                'pt-PT': None, 'pa': None, 'qu': None, 'ro': None, 'rm': None, 'rn': None, 'ru': None, 'ru-Latn': None, 'sm': None, 'sg': None, 'sa': None, 'sc': None, 'gd': None, 'sr': None, 'sr-Cyrl': None, 'sr-Latn': None, 'sh': None, 'sdp': None, 'sn': None, 
-                                'scn': None, 'sd': None, 'si': None, 'sk': None, 'sl': None, 'so': None, 'st': None, 'es': None, 'es-419': None, 'es-MX': None, 'es-ES': None, 'es-US': None, 'su': None, 'sw': None, 'ss': None, 'sv': None, 'tl': None, 'tg': None, 'ta': None, 
-                                'tt': None, 'te': None, 'th': None, 'bo': None, 'ti': None, 'tpi': None, 'to': None, 'ts': None, 'tn': None, 'tr': None, 'tk': None, 'tw': None, 'uk': None, 'ur': None, 'uz': None, 'vi': None, 'vo': None, 'vor': None, 'cy': None, 'fy': None, 'wo': None, 
-                                'xh': None, 'yi': None, 'yo': None, 'zu': None}
-                            jobs.put(("discovery", desit.split(":", 1)[1], None))
-                        elif desit.split(":", 1)[0] == "channel":
-                            jobs.put(("channel", None, desit.split(":", 1)[1]))
-                        elif desit.split(":", 1)[0] == "playlist":
-                            jobs.put(("playlist", None, desit.split(":", 1)[1]))
-                        elif desit.split(":", 1)[0] == "mixplaylist":
-                            jobs.put(("mixplaylist", None, desit.split(":", 1)[1]))
-                        else:
-                            print("Ignoring item for now", desit)
+                if desit:
+                    if desit.split(":", 1)[0] == "video":
+                        needforcemetadata = {'ab': None, 'aa': None, 'af': None, 'sq': None, 'ase': None, 'am': None, 'ar': None, 'arc': None, 'hy': None, 'as': None, 'ay': None, 'az': None, 'bn': None, 'ba': None, 'eu': None, 'be': None, 'bh': None, 'bi': None, 'bs': None, 'br': None, 
+                            'bg': None, 'yue': None, 'yue-HK': None, 'ca': None, 'chr': None, 'zh-CN': None, 'zh-HK': None, 'zh-Hans': None, 'zh-SG': None, 'zh-TW': None, 'zh-Hant': None, 'cho': None, 'co': None, 'hr': None, 'cs': None, 'da': None, 'nl': None, 
+                            'nl-BE': None, 'nl-NL': None, 'dz': None, 'en': None, 'en-CA': None, 'en-IN': None, 'en-IE': None, 'en-GB': None, 'en-US': None, 'eo': None, 'et': None, 'fo': None, 'fj': None, 'fil': None, 'fi': None, 'fr': None, 'fr-BE': None, 
+                            'fr-CA': None, 'fr-FR': None, 'fr-CH': None, 'ff': None, 'gl': None, 'ka': None, 'de': None, 'de-AT': None, 'de-DE': None, 'de-CH': None, 'el': None, 'kl': None, 'gn': None, 'gu': None, 'ht': None, 'hak': None, 'hak-TW': None, 'ha': None, 
+                            'iw': None, 'hi': None, 'hi-Latn': None, 'ho': None, 'hu': None, 'is': None, 'ig': None, 'id': None, 'ia': None, 'ie': None, 'iu': None, 'ik': None, 'ga': None, 'it': None, 'ja': None, 'jv': None, 'kn': None, 'ks': None, 'kk': None, 'km': None, 'rw': None, 
+                            'tlh': None, 'ko': None, 'ku': None, 'ky': None, 'lo': None, 'la': None, 'lv': None, 'ln': None, 'lt': None, 'lb': None, 'mk': None, 'mg': None, 'ms': None, 'ml': None, 'mt': None, 'mni': None, 'mi': None, 'mr': None, 'mas': None, 'nan': None, 
+                            'nan-TW': None, 'lus': None, 'mo': None, 'mn': None, 'my': None, 'na': None, 'nv': None, 'ne': None, 'no': None, 'oc': None, 'or': None, 'om': None, 'ps': None, 'fa': None, 'fa-AF': None, 'fa-IR': None, 'pl': None, 'pt': None, 'pt-BR': None, 
+                            'pt-PT': None, 'pa': None, 'qu': None, 'ro': None, 'rm': None, 'rn': None, 'ru': None, 'ru-Latn': None, 'sm': None, 'sg': None, 'sa': None, 'sc': None, 'gd': None, 'sr': None, 'sr-Cyrl': None, 'sr-Latn': None, 'sh': None, 'sdp': None, 'sn': None, 
+                            'scn': None, 'sd': None, 'si': None, 'sk': None, 'sl': None, 'so': None, 'st': None, 'es': None, 'es-419': None, 'es-MX': None, 'es-ES': None, 'es-US': None, 'su': None, 'sw': None, 'ss': None, 'sv': None, 'tl': None, 'tg': None, 'ta': None, 
+                            'tt': None, 'te': None, 'th': None, 'bo': None, 'ti': None, 'tpi': None, 'to': None, 'ts': None, 'tn': None, 'tr': None, 'tk': None, 'tw': None, 'uk': None, 'ur': None, 'uz': None, 'vi': None, 'vo': None, 'vor': None, 'cy': None, 'fy': None, 'wo': None, 
+                            'xh': None, 'yi': None, 'yo': None, 'zu': None}
+                        needforcecaptions = {'ab': None, 'aa': None, 'af': None, 'sq': None, 'ase': None, 'am': None, 'ar': None, 'arc': None, 'hy': None, 'as': None, 'ay': None, 'az': None, 'bn': None, 'ba': None, 'eu': None, 'be': None, 'bh': None, 'bi': None, 'bs': None, 'br': None, 
+                            'bg': None, 'yue': None, 'yue-HK': None, 'ca': None, 'chr': None, 'zh-CN': None, 'zh-HK': None, 'zh-Hans': None, 'zh-SG': None, 'zh-TW': None, 'zh-Hant': None, 'cho': None, 'co': None, 'hr': None, 'cs': None, 'da': None, 'nl': None, 
+                            'nl-BE': None, 'nl-NL': None, 'dz': None, 'en': None, 'en-CA': None, 'en-IN': None, 'en-IE': None, 'en-GB': None, 'en-US': None, 'eo': None, 'et': None, 'fo': None, 'fj': None, 'fil': None, 'fi': None, 'fr': None, 'fr-BE': None, 
+                            'fr-CA': None, 'fr-FR': None, 'fr-CH': None, 'ff': None, 'gl': None, 'ka': None, 'de': None, 'de-AT': None, 'de-DE': None, 'de-CH': None, 'el': None, 'kl': None, 'gn': None, 'gu': None, 'ht': None, 'hak': None, 'hak-TW': None, 'ha': None, 
+                            'iw': None, 'hi': None, 'hi-Latn': None, 'ho': None, 'hu': None, 'is': None, 'ig': None, 'id': None, 'ia': None, 'ie': None, 'iu': None, 'ik': None, 'ga': None, 'it': None, 'ja': None, 'jv': None, 'kn': None, 'ks': None, 'kk': None, 'km': None, 'rw': None, 
+                            'tlh': None, 'ko': None, 'ku': None, 'ky': None, 'lo': None, 'la': None, 'lv': None, 'ln': None, 'lt': None, 'lb': None, 'mk': None, 'mg': None, 'ms': None, 'ml': None, 'mt': None, 'mni': None, 'mi': None, 'mr': None, 'mas': None, 'nan': None, 
+                            'nan-TW': None, 'lus': None, 'mo': None, 'mn': None, 'my': None, 'na': None, 'nv': None, 'ne': None, 'no': None, 'oc': None, 'or': None, 'om': None, 'ps': None, 'fa': None, 'fa-AF': None, 'fa-IR': None, 'pl': None, 'pt': None, 'pt-BR': None, 
+                            'pt-PT': None, 'pa': None, 'qu': None, 'ro': None, 'rm': None, 'rn': None, 'ru': None, 'ru-Latn': None, 'sm': None, 'sg': None, 'sa': None, 'sc': None, 'gd': None, 'sr': None, 'sr-Cyrl': None, 'sr-Latn': None, 'sh': None, 'sdp': None, 'sn': None, 
+                            'scn': None, 'sd': None, 'si': None, 'sk': None, 'sl': None, 'so': None, 'st': None, 'es': None, 'es-419': None, 'es-MX': None, 'es-ES': None, 'es-US': None, 'su': None, 'sw': None, 'ss': None, 'sv': None, 'tl': None, 'tg': None, 'ta': None, 
+                            'tt': None, 'te': None, 'th': None, 'bo': None, 'ti': None, 'tpi': None, 'to': None, 'ts': None, 'tn': None, 'tr': None, 'tk': None, 'tw': None, 'uk': None, 'ur': None, 'uz': None, 'vi': None, 'vo': None, 'vor': None, 'cy': None, 'fy': None, 'wo': None, 
+                            'xh': None, 'yi': None, 'yo': None, 'zu': None}
+                        jobs.put(("discovery", desit.split(":", 1)[1], None))
+                    elif desit.split(":", 1)[0] == "channel":
+                        jobs.put(("channel", None, desit.split(":", 1)[1]))
+                    elif desit.split(":", 1)[0] == "playlist":
+                        jobs.put(("playlist", None, desit.split(":", 1)[1]))
+                    elif desit.split(":", 1)[0] == "mixplaylist":
+                        jobs.put(("mixplaylist", None, desit.split(":", 1)[1]))
                     else:
                         print("Ignoring item for now", desit)
                 else:
-                    break
+                    print("Ignoring item for now", desit)
             else:
                 break
     
@@ -339,9 +308,5 @@ for x in threads:
     x.join()
     threads.remove(x)
     del x
-
-if not shouldgetjob:
-    print("PROTECTION MECHANISM #3 WAS SOMEHOW TRIGERRED")
-    print("Community Contribution discovery has been disabled for this account, please report this on our Discord as this may have caused some videos to be incorrectly marked as having community contributions disabled.")
 
 print("Exiting...")

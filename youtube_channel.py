@@ -1,25 +1,39 @@
 from requests import session
-from youtube_util import getinitialdata, fullyexpand
-
-# TODO: Rate limit detection, HTTP3?
+from youtube_util import getinitialdata, fullyexpand, getapikey, getlver
+from time import sleep
 
 mysession = session()
 #extract latest version automatically
-try:
-    lver = getinitialdata(mysession.get("https://www.youtube.com/").text)["responseContext"]["serviceTrackingParams"][2]["params"][2]["value"]
-except:
-    lver = "2.20201002.02.01"
+homepage = mysession.get("https://www.youtube.com/").text
 
-#print(lver)
-mysession.headers.update({"x-youtube-client-name": "1", "x-youtube-client-version": lver, "Accept-Language": "en-US"})
+API_KEY = getapikey(homepage)
 
-def main(channelid: str):
+params = (
+    ('key', API_KEY),
+)
+
+API_VERSION = getlver(getinitialdata(homepage))
+
+continuationheaders = {"x-youtube-client-name": "1", "x-youtube-client-version": API_VERSION, "Accept-Language": "en-US"}
+
+del homepage
+
+def process_channel(channelid: str):
     playlists = set()
     shelfres  = set()
     channellist = set()
 
     # PLAYLISTS
-    initdata = getinitialdata(mysession.get("https://www.youtube.com/channel/"+str(channelid)+"/playlists").text)
+    data = {"context":{"client":{"hl":"en","gl":"US","clientName":"WEB","clientVersion":API_VERSION}},"browseId":channelid,"params":"EglwbGF5bGlzdHM%3D"}
+    while True:
+        initdata = mysession.post("https://www.youtube.com/youtubei/v1/browse", params=params, json=data)
+        if initdata.status_code == 200:
+            initdata = initdata.json()
+            break
+        else:
+            print("Non-200 API status code, waiting 30 seconds before retrying...")
+            sleep(30)
+
 
     CHANNELS_ID = 0
     PLAYLISTS_ID = 0
@@ -42,7 +56,7 @@ def main(channelid: str):
         if "shelfRenderer" in itemint.keys():
             shelfres.add(itemint["shelfRenderer"]["title"]["runs"][0]["navigationEndpoint"]["commandMetadata"]["webCommandMetadata"]["url"])
         elif "gridRenderer" in itemint.keys():
-            playlistsint = fullyexpand(itemint["gridRenderer"])["items"]
+            playlistsint = fullyexpand(itemint["gridRenderer"], mysession, continuationheaders)["items"]
 
             for playlist in playlistsint:
                 playlists.add(playlist["gridPlaylistRenderer"]["playlistId"])
@@ -50,8 +64,18 @@ def main(channelid: str):
                     channellist.add(playlist["gridPlaylistRenderer"]["shortBylineText"]["runs"][0]["navigationEndpoint"]["browseEndpoint"]["browseId"])
 
     for item in shelfres:
-        shelfiteminitdata = getinitialdata(mysession.get("https://www.youtube.com/"+str(item)).text)
-        playlistsint = fullyexpand(shelfiteminitdata["contents"]["twoColumnBrowseResultsRenderer"]["tabs"][PLAYLISTS_ID]["tabRenderer"]["content"]["sectionListRenderer"]["contents"][0]["itemSectionRenderer"]["contents"][0]["gridRenderer"])["items"]
+        while True:
+            shelfintp = mysession.get("https://www.youtube.com/"+str(item))
+            if not """</div><div id="content" class="  content-alignment" role="main"><p class='largeText'>Sorry for the interruption. We have been receiving a large volume of requests from your network.</p>
+
+<p>To continue with your YouTube experience, please fill out the form below.</p>""" in shelfintp.text and shelfintp.status_code == 200:
+                break
+            else:
+                print("Non-200 status code, waiting 30 seconds before retrying...")
+                sleep(30)
+
+        shelfiteminitdata = getinitialdata(shelfintp.text)
+        playlistsint = fullyexpand(shelfiteminitdata["contents"]["twoColumnBrowseResultsRenderer"]["tabs"][PLAYLISTS_ID]["tabRenderer"]["content"]["sectionListRenderer"]["contents"][0]["itemSectionRenderer"]["contents"][0]["gridRenderer"], mysession, continuationheaders)["items"]
 
         for playlist in playlistsint:
             playlists.add(playlist["gridPlaylistRenderer"]["playlistId"])
@@ -61,7 +85,16 @@ def main(channelid: str):
     # CHANNELS
     cshelfres = set()
 
-    initdata = getinitialdata(mysession.get("https://www.youtube.com/channel/"+str(channelid)+"/channels").text)
+    # PLAYLISTS
+    data = {"context":{"client":{"hl":"en","gl":"US","clientName":"WEB","clientVersion":API_VERSION}},"browseId":channelid,"params":"EghjaGFubmVscw%3D%3D"}
+    while True:
+        initdata = mysession.post("https://www.youtube.com/youtubei/v1/browse", params=params, json=data)
+        if initdata.status_code == 200:
+            initdata = initdata.json()
+            break
+        else:
+            print("Non-200 API status code, waiting 30 seconds before retrying...")
+            sleep(30)
 
     shelflist = initdata["contents"]["twoColumnBrowseResultsRenderer"]["tabs"][CHANNELS_ID]["tabRenderer"]["content"]["sectionListRenderer"]["contents"]
 
@@ -70,14 +103,24 @@ def main(channelid: str):
         if "shelfRenderer" in itemint.keys():
             cshelfres.add(itemint["shelfRenderer"]["title"]["runs"][0]["navigationEndpoint"]["commandMetadata"]["webCommandMetadata"]["url"])
         elif "gridRenderer" in itemint.keys():
-            chanlistint = fullyexpand(itemint["gridRenderer"])["items"]
+            chanlistint = fullyexpand(itemint["gridRenderer"], mysession, continuationheaders)["items"]
 
             for channel in chanlistint:
                 channellist.add(channel["gridChannelRenderer"]["channelId"])
 
     for item in cshelfres:
-        shelfiteminitdata = getinitialdata(mysession.get("https://www.youtube.com/"+str(item)).text)
-        chanlistint = fullyexpand(shelfiteminitdata["contents"]["twoColumnBrowseResultsRenderer"]["tabs"][CHANNELS_ID]["tabRenderer"]["content"]["sectionListRenderer"]["contents"][0]["itemSectionRenderer"]["contents"][0]["gridRenderer"])["items"]
+        while True:
+            shelfintc = mysession.get("https://www.youtube.com/"+str(item))
+            if not """</div><div id="content" class="  content-alignment" role="main"><p class='largeText'>Sorry for the interruption. We have been receiving a large volume of requests from your network.</p>
+
+<p>To continue with your YouTube experience, please fill out the form below.</p>""" in shelfintc.text and shelfintc.status_code == 200:
+                break
+            else:
+                print("Non-200 status code, waiting 30 seconds before retrying...")
+                sleep(30)
+
+        shelfiteminitdata = getinitialdata(shelfintc.text)
+        chanlistint = fullyexpand(shelfiteminitdata["contents"]["twoColumnBrowseResultsRenderer"]["tabs"][CHANNELS_ID]["tabRenderer"]["content"]["sectionListRenderer"]["contents"][0]["itemSectionRenderer"]["contents"][0]["gridRenderer"], mysession, continuationheaders)["items"]
 
         for channel in chanlistint:
             channellist.add(channel["gridChannelRenderer"]["channelId"])
@@ -89,7 +132,7 @@ if __name__ == "__main__":
     chanl = argv
     chanl.pop(0)
     for channel in chanl:
-        print(main(channel))
+        print(process_channel(channel))
 
 # SAMPLES:
 # UCqj7Cz7revf5maW9g5pgNcg lots of playlists
