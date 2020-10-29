@@ -1,3 +1,30 @@
+# Let's remind people who still have this running to shut it down
+from os.path import isfile
+from json import loads
+from os import environ
+import requests
+from sys import exit
+if "TRACKER_USERNAME" in environ.keys():
+    TRACKER_USERNAME = environ["TRACKER_USERNAME"]
+elif isfile("config.json"):
+    try:
+        TRACKER_USERNAME = loads(open("config.json").read())["TRACKER_USERNAME"]
+    except:
+        TRACKER_USERNAME = "Unnamed"
+else:
+    TRACKER_USERNAME = "Unnamed"
+
+print("=============================")
+print("This project is now complete, and we are working on sorting and finalizing the data. Thank you to everyone who contributed!")
+print("=============================")
+
+print()
+
+print("Just a heads up, we will send your TRACKER_USERNAME to the script admins just so we can remind you to shut down your worker if you've forgotten.")
+requests.post("https://discord.com/api/webhooks/771212810877141032/dj9WCWZ2oE5t_vzdyc_OEdTaGbAP92bJFe8CEfYXlRXKJfPewOHWYAgBrLwx596k0CJC", json={"content": str(TRACKER_USERNAME)+" just tried to start a worker."})
+
+exit(0)
+
 from threading import Thread
 import requests
 from time import sleep
